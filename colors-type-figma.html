@@ -1,0 +1,2503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>颜色 / 字号 / 间距 — Tokens 一一对应到 CSS Variables</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  @font-face {
+    font-family: 'Alimama ShuHeiTi';
+    src: local('Alimama ShuHeiTi VF'),
+         local('Alimama ShuHeiTi'),
+         local('阿里妈妈数黑体'),
+         url('fonts/AlimamaShuHeiTi-Bold.woff2') format('woff2');
+    font-weight: 400 900;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --bg: #f7f4ec;
+    --bg-2: #e4e4e7;
+    --ink: #16161d;
+    --ink-soft: #4a4a55;
+    --ink-mute: #8a8a92;
+    --line: #e4e4e7;
+    --line-soft: #e3dcca;
+    --accent: #EF7627;
+    --accent-soft: #ffe4dc;
+    --blue: #0a4cff;
+    --blue-soft: #dde6ff;
+    --green: #1f6b3a;
+    --green-soft: #d4ecdb;
+    --yellow: #ffcf3d;
+    --paper: #faf7f0;
+    --shadow: 0 1px 0 rgba(0,0,0,0.04), 0 8px 24px rgba(22,22,29,0.06);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Geist', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(22,22,29,0.05) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+
+  /* Typography */
+  .display-cn { font-family: 'Noto Serif SC', 'Inter', 'PingFang SC', system-ui, sans-serif; font-weight: 900; letter-spacing: -0.01em; }
+  .display-en { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'Inter', 'PingFang SC', system-ui, sans-serif; font-weight: 600; font-style: italic; letter-spacing: -0.02em; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .label { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); }
+
+  /* Layout */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+
+  /* Top bar */
+  .topbar {
+    border-bottom: 1px dashed var(--line);
+    padding: 16px 0;
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-inner { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+  .brand { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }
+  .brand .dot { display: inline-block; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; margin-right: 8px; vertical-align: middle; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .nav-links { display: flex; gap: 20px; font-size: 13px; }
+  .nav-links a { color: var(--ink-soft); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-links a.current { color: var(--accent); font-weight: 600; }
+
+  /* Hero */
+  .hero { padding: 100px 0 80px; position: relative; overflow: hidden; }
+  .hero-meta { display: flex; gap: 24px; margin-bottom: 32px; align-items: center; flex-wrap: wrap; }
+  .hero-meta .pill { padding: 6px 12px; border: 1px solid var(--ink); border-radius: 100px; font-size: 11px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em; }
+  .hero-meta .pill.fill { background: var(--ink); color: var(--bg); }
+  .hero h1 {
+    font-family: 'Noto Serif SC', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(48px, 7vw, 92px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    margin: 0 0 24px;
+  }
+  .hero h1 .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-weight: 500; color: var(--accent); }
+  .hero h1 .x { display: inline-block; transform: translateY(-0.05em); margin: 0 0.05em; color: var(--ink-mute); font-weight: 300; }
+  .hero h1 .slash { display: inline-block; margin: 0 0.08em; color: var(--ink-mute); font-weight: 300; font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif; font-style: italic; }
+  .hero p.lede {
+    font-size: 20px;
+    line-height: 1.5;
+    max-width: 640px;
+    color: var(--ink-soft);
+    margin: 0 0 40px;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 48px;
+    align-items: end;
+  }
+  .hero-side {
+    border-left: 1px dashed var(--line);
+    padding-left: 24px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .hero-side .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+  .hero-side .row:last-child { border-bottom: none; }
+  .hero-side .row .k { color: var(--ink-mute); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .hero-side .row .v { font-weight: 500; }
+
+  /* Section */
+  section { padding: 80px 0; border-top: 1px solid var(--line); position: relative; }
+  .section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 56px; flex-wrap: wrap; gap: 16px; }
+  .section-num { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink-mute); letter-spacing: 0.1em; }
+  .section-num strong { color: var(--accent); }
+  .section-title {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 900;
+    font-size: clamp(32px, 4.5vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0;
+    max-width: 18ch;
+  }
+  .section-title .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-weight: 500; color: var(--accent); }
+  .section-sub { color: var(--ink-soft); font-size: 17px; max-width: 38ch; line-height: 1.55; margin: 0; }
+
+  /* Problem comparison */
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 24px;
+  }
+  @media (max-width: 720px) { .problem-grid { grid-template-columns: 1fr; } }
+  .problem-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 28px;
+    position: relative;
+  }
+  .problem-card.bad { border-color: var(--accent); background: var(--accent-soft); }
+  .problem-card.good { border-color: var(--green); background: var(--green-soft); }
+  .problem-card .tag {
+    position: absolute; top: -12px; left: 24px;
+    background: var(--bg); padding: 2px 10px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+  .problem-card.bad .tag { color: var(--accent); border: 1px solid var(--accent); }
+  .problem-card.good .tag { color: var(--green); border: 1px solid var(--green); }
+  .problem-card h3 { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-size: 22px; margin: 0 0 12px; font-weight: 700; }
+  .problem-card p { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.55; }
+
+  /* BAD/GOOD chip clouds for §01 */
+  .chip-cloud {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .chip-cloud .chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    border: 1px solid var(--ink);
+    background: white;
+    color: var(--ink);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chip-cloud .chip .sw {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    border: 1px solid rgba(22,22,29,0.15);
+    flex: 0 0 auto;
+  }
+  .chip-cloud.bad .chip { border-color: rgba(255,77,46,0.55); }
+  .chip-cloud.good .chip { border-color: rgba(31,107,58,0.45); background: white; }
+
+  /* Code panel — shared */
+  .code-panel {
+    background: var(--ink);
+    color: #e8e8ec;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    padding: 36px 24px 20px;
+    border-radius: 6px;
+    margin-top: 0;
+    position: relative;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .code-panel .ckey { color: #ff8a6e; }
+  .code-panel .cval { color: #ffd166; }
+  .code-panel .cstr { color: #a8e6a3; }
+  .code-panel .ccom { color: #6e6e7a; font-style: italic; }
+  .code-panel .cnum { color: #8ec5ff; }
+  .code-panel .csel { color: #c9b6ff; }
+  .code-panel::before {
+    content: '';
+    position: absolute;
+    top: 12px; left: 14px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ff5f56;
+    box-shadow: 14px 0 0 #ffbd2e, 28px 0 0 #27c93f;
+  }
+  .code-panel .filename {
+    position: absolute; top: 10px; right: 14px;
+    font-size: 10px; color: #6e6e7a; letter-spacing: 0.05em;
+  }
+  .code-row {
+    display: inline-block;
+    border-radius: 3px;
+    padding: 0 6px;
+    margin: 0 -6px;
+    box-shadow: inset 2px 0 0 transparent;
+    transition: background-color 0.18s ease, box-shadow 0.18s ease;
+    cursor: default;
+  }
+  .code-row.is-active {
+    background-color: rgba(255, 138, 110, 0.14);
+    box-shadow: inset 2px 0 0 #ff8a6e;
+  }
+  @keyframes codeRowFlash {
+    0%   { background-color: rgba(255, 138, 110, 0.45); }
+    100% { background-color: rgba(255, 138, 110, 0.14); }
+  }
+  .code-row.is-flash {
+    animation: codeRowFlash 0.55s ease-out;
+  }
+
+  /* Mapping table */
+  .mapping {
+    display: grid;
+    grid-template-columns: 1fr 60px 1fr;
+    gap: 0;
+    margin-top: 16px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--paper);
+  }
+  .mapping-head { display: contents; }
+  .mapping-head > div {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 14px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .mapping-head > div:nth-child(2) { text-align: center; }
+  .mapping-row { display: contents; }
+  .mapping-row > div {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+  }
+  .mapping-row:last-child > div { border-bottom: none; }
+  .mapping-row > div:nth-child(1) { border-right: 1px dashed var(--line); }
+  .mapping-row > div:nth-child(2) {
+    border-right: 1px dashed var(--line);
+    text-align: center;
+    color: var(--accent);
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    font-style: italic;
+    font-size: 18px;
+    background: var(--bg);
+  }
+  .mapping-row .css-name { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; }
+  .mapping-row .css-name + .desc { color: var(--ink-soft); font-size: 13px; margin-top: 4px; }
+  .mapping-row .figma-name { font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .mapping-row .figma-name + .desc { color: var(--ink-soft); font-size: 13px; margin-top: 4px; }
+  .mapping-row .figma-name .sw {
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(22,22,29,0.18);
+    flex: 0 0 auto;
+  }
+
+  /* ===== §02 Color Tokens — interactive split ===== */
+  .colors-stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 880px) { .colors-stage { grid-template-columns: 1fr; } }
+
+  /* Figma-style variables panel */
+  .fig-vars {
+    background: #2c2c2c;
+    color: #e8e8e8;
+    border-radius: 6px;
+    padding: 0;
+    font-family: 'Geist', system-ui, sans-serif;
+    overflow: hidden;
+  }
+  .fig-vars-head {
+    background: #1f1f1f;
+    padding: 12px 16px;
+    border-bottom: 1px solid #404040;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .fig-vars-head .icn {
+    width: 16px; height: 16px;
+    background: linear-gradient(135deg, #ff5f56, #ffbd2e, #0d99ff);
+    border-radius: 3px;
+  }
+  .fig-vars-head .ttl {
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: #e8e8e8;
+    font-weight: 600;
+  }
+  .fig-vars-head .ttl small { color: #888; font-weight: 400; margin-left: 6px; }
+  .fig-vars-body {
+    padding: 6px 0;
+    max-height: 540px;
+    overflow-y: auto;
+  }
+  .fig-vars-group {
+    padding: 6px 0;
+  }
+  .fig-vars-group .gh {
+    font-size: 10px;
+    color: #888;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 4px 16px 4px 26px;
+  }
+  .fig-vars-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 16px 6px 26px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #d8d8d8;
+    transition: background-color 0.15s;
+    border-left: 2px solid transparent;
+  }
+  .fig-vars-row:hover {
+    background: #353535;
+  }
+  .fig-vars-row.is-active {
+    background: rgba(13, 153, 255, 0.18);
+    border-left-color: #0d99ff;
+    color: white;
+  }
+  .fig-vars-row .sw {
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.18);
+    flex: 0 0 auto;
+  }
+  .fig-vars-row .nm {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .fig-vars-row .vl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: #888;
+    flex: 0 0 auto;
+  }
+  .fig-vars-row.is-active .vl { color: #b8d8ff; }
+
+  /* Right-side code (active row highlights) */
+  .colors-code {
+    background: var(--ink);
+    color: #e8e8ec;
+    border-radius: 6px;
+    overflow: hidden;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.85;
+    box-shadow: 0 4px 16px rgba(22,22,29,0.12);
+  }
+  .colors-code-head {
+    background: #1f1f29;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #2a2a36;
+  }
+  .colors-code-head .dots {
+    display: inline-block;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ff5f56;
+    box-shadow: 14px 0 0 #ffbd2e, 28px 0 0 #27c93f;
+    margin-right: 28px;
+  }
+  .colors-code-head .fn {
+    font-size: 11px;
+    color: #8a8a96;
+    letter-spacing: 0.05em;
+  }
+  .colors-code-body {
+    padding: 14px 18px 18px;
+    overflow-x: auto;
+  }
+  .colors-code-body .ln {
+    white-space: nowrap;
+    border-radius: 3px;
+    padding: 0 6px;
+    margin: 0 -6px;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    box-shadow: inset 2px 0 0 transparent;
+  }
+  .colors-code-body .ln.indent { padding-left: 2ch; }
+  .colors-code-body .ln.is-active {
+    background-color: rgba(255, 138, 110, 0.14);
+    box-shadow: inset 2px 0 0 #ff8a6e;
+  }
+  .colors-code-body .ckey { color: #ff8a6e; }
+  .colors-code-body .cval { color: #ffd166; }
+  .colors-code-body .cstr { color: #a8e6a3; }
+  .colors-code-body .ccom { color: #6e6e7a; font-style: italic; }
+  .colors-code-body .csel { color: #c9b6ff; }
+
+  .colors-hint {
+    margin-top: 16px;
+    padding: 14px 18px;
+    background: var(--paper);
+    border: 1px dashed var(--line);
+    border-left: 3px solid var(--blue);
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+  .colors-hint strong { color: var(--ink); }
+  .colors-hint .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: var(--bg-2); padding: 1px 6px; border-radius: 3px; color: var(--ink); }
+
+  /* Color palette swatch grid */
+  .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    margin-top: 24px;
+  }
+  @media (max-width: 720px) { .palette-grid { grid-template-columns: repeat(3, 1fr); } }
+  .palette-swatch {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .palette-swatch .color {
+    height: 56px;
+    border-bottom: 1px solid rgba(22,22,29,0.08);
+  }
+  .palette-swatch .meta {
+    padding: 8px 10px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    line-height: 1.4;
+  }
+  .palette-swatch .meta .nm { color: var(--ink); font-weight: 500; }
+  .palette-swatch .meta .hx { color: var(--ink-mute); margin-top: 2px; }
+
+  /* ===== §03 Type Scale — interactive ratio slider ===== */
+  .type-stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 880px) { .type-stage { grid-template-columns: 1fr; } }
+
+  .type-preview {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .type-preview-head {
+    background: var(--bg-2);
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .type-preview-head .lab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .type-preview-body { padding: 8px 0; }
+  .type-row {
+    display: grid;
+    grid-template-columns: 84px 1fr 80px;
+    gap: 12px;
+    align-items: baseline;
+    padding: 14px 18px;
+    border-bottom: 1px dashed var(--line-soft);
+    transition: background-color 0.2s;
+  }
+  .type-row:last-child { border-bottom: none; }
+  .type-row:hover { background: var(--bg-2); }
+  .type-row.is-active { background: var(--accent-soft); }
+  .type-row .nm {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-mute);
+    letter-spacing: 0.04em;
+  }
+  .type-row .nm strong { color: var(--ink); font-weight: 600; }
+  .type-row .sample {
+    font-family: 'Noto Serif SC', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    color: var(--ink);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: font-size 0.25s ease;
+  }
+  .type-row .px {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .type-controls {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 22px 24px;
+  }
+  .type-controls h4 {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 16px;
+    margin: 0 0 12px;
+    font-weight: 700;
+  }
+  .type-controls .desc {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0 0 18px;
+    line-height: 1.55;
+  }
+  .ratio-seg {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    background: var(--bg-2);
+    padding: 3px;
+    border-radius: 5px;
+    margin-bottom: 18px;
+  }
+  .ratio-seg button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    border-radius: 3px;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    line-height: 1.2;
+  }
+  .ratio-seg button.active { background: var(--ink); color: var(--bg); }
+  .ratio-seg button .r-num { font-size: 13px; font-weight: 600; }
+  .ratio-seg button .r-nm { font-size: 9px; opacity: 0.75; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  .ratio-formula {
+    background: var(--ink);
+    color: #e8e8ec;
+    padding: 14px 18px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .ratio-formula .ckey { color: #ff8a6e; }
+  .ratio-formula .cval { color: #ffd166; }
+  .ratio-formula .ccom { color: #6e6e7a; font-style: italic; }
+  .ratio-formula .csel { color: #c9b6ff; }
+  .ratio-formula .hl { background: rgba(255,138,110,0.18); padding: 0 4px; border-radius: 2px; }
+
+  /* ===== §04 Spacing Scale — sliders & ruler ===== */
+  .space-stage {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 880px) { .space-stage { grid-template-columns: 1fr; } }
+
+  .space-canvas {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 24px 24px 20px;
+    overflow: hidden;
+  }
+  .space-canvas-head {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .space-canvas-head .ttl strong { color: var(--ink); }
+
+  /* Card preview that moves with --space-* changes */
+  .space-card {
+    background: white;
+    border: 1.5px dashed var(--blue);
+    border-radius: 6px;
+    transition: padding 0.25s ease, gap 0.25s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .space-card-head {
+    display: flex;
+    align-items: center;
+    transition: gap 0.25s ease;
+  }
+  .space-card-head .av {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex: 0 0 auto;
+  }
+  .space-card-head .info { display: flex; flex-direction: column; gap: 4px; }
+  .space-card-head .ttl {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .space-card-head .sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+  }
+  .space-card-body {
+    color: var(--ink-soft);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .space-card-actions {
+    display: flex;
+    transition: gap 0.25s ease;
+  }
+  .space-card-actions .btn {
+    padding: 8px 14px;
+    background: var(--ink);
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'Geist', sans-serif;
+  }
+  .space-card-actions .btn.alt {
+    background: white;
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+
+  .ruler-strip {
+    margin-top: 18px;
+    background: var(--bg-2);
+    border-radius: 4px;
+    padding: 14px 16px;
+  }
+  .ruler-strip .lab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .ruler-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    min-height: 56px;
+  }
+  .ruler-bar {
+    background: var(--accent);
+    transition: width 0.25s ease, height 0.25s ease;
+    position: relative;
+  }
+  .ruler-bar .nm {
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-mute);
+    white-space: nowrap;
+  }
+  .ruler-bar .px {
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .ruler-bars-wrap {
+    padding: 22px 4px 28px;
+  }
+
+  .space-controls {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 22px 24px;
+  }
+  .space-controls h4 {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 16px;
+    margin: 0 0 6px;
+    font-weight: 700;
+  }
+  .space-controls .desc {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0 0 16px;
+    line-height: 1.55;
+  }
+  .space-controls .ctrl {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .space-controls .ctrl-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .space-controls .ctrl-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .space-controls .ctrl-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+  .space-readout {
+    background: var(--ink);
+    color: #e8e8ec;
+    padding: 14px 18px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.75;
+    margin-top: 8px;
+  }
+  .space-readout .ckey { color: #ff8a6e; }
+  .space-readout .cval { color: #ffd166; }
+  .space-readout .ccom { color: #6e6e7a; font-style: italic; }
+  .space-readout .csel { color: #c9b6ff; }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--line);
+    border-radius: 0;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    background: var(--ink);
+    border: 2px solid var(--bg);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px var(--ink);
+    transition: transform 0.1s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); background: var(--accent); }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px;
+    background: var(--ink);
+    border: 2px solid var(--bg);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px var(--ink);
+  }
+
+  /* ===== §05 Other tokens cheat ===== */
+  .other-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: 8px;
+  }
+  @media (max-width: 880px) { .other-grid { grid-template-columns: 1fr; } }
+  .other-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 22px 24px;
+  }
+  .other-card .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .other-card h4 {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 18px;
+    margin: 0;
+    font-weight: 700;
+  }
+  .other-card .pfx {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+  .other-card .preview {
+    background: var(--bg);
+    border: 1px dashed var(--line);
+    border-radius: 4px;
+    padding: 16px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .other-card .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--line-soft);
+    font-size: 12px;
+  }
+  .other-card .row:last-child { border-bottom: none; }
+  .other-card .row .k {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-soft);
+  }
+  .other-card .row .v {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* radius preview tiles */
+  .r-tile {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, var(--accent), #ff7355);
+  }
+  .r-tile.s { border-radius: 2px; }
+  .r-tile.m { border-radius: 6px; }
+  .r-tile.l { border-radius: 12px; }
+  .r-tile.xl { border-radius: 999px; width: 60px; }
+
+  /* shadow preview tiles */
+  .sh-tile {
+    width: 56px; height: 56px;
+    background: white;
+    border-radius: 6px;
+  }
+  .sh-tile.sm { box-shadow: 0 1px 2px rgba(22,22,29,0.10); }
+  .sh-tile.md { box-shadow: 0 4px 12px rgba(22,22,29,0.10); }
+  .sh-tile.lg { box-shadow: 0 12px 32px rgba(22,22,29,0.18); }
+
+  /* border preview tiles */
+  .bd-tile {
+    width: 48px; height: 48px;
+    background: var(--paper);
+    border-color: var(--ink);
+    border-style: solid;
+  }
+  .bd-tile.sm { border-width: 1px; }
+  .bd-tile.md { border-width: 2px; }
+  .bd-tile.lg { border-width: 4px; }
+
+  /* ===== §06 Tips & outro ===== */
+  .tips-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  @media (max-width: 880px) { .tips-grid { grid-template-columns: 1fr; } }
+  .tip {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 28px;
+    position: relative;
+  }
+  .tip-num { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif; font-style: italic; font-size: 48px; line-height: 1; color: var(--accent); margin-bottom: 12px; }
+  .tip h4 { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-size: 18px; margin: 0 0 10px; font-weight: 700; }
+  .tip p { margin: 0; font-size: 14px; color: var(--ink-soft); line-height: 1.6; }
+  .tip code.mono { font-size: 12px; background: var(--bg-2); padding: 1px 5px; border-radius: 3px; color: var(--ink); }
+
+  /* Cheat sheet */
+  .cheat {
+    margin-top: 28px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .cheat-head {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 14px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .cheat-head .ttl {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .cheat-head .lab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.6);
+  }
+  .cheat-table {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr 1.4fr;
+  }
+  .cheat-row {
+    display: contents;
+  }
+  .cheat-row > div {
+    padding: 14px 22px;
+    border-bottom: 1px dashed var(--line-soft);
+    font-size: 13px;
+  }
+  .cheat-row:last-child > div { border-bottom: none; }
+  .cheat-row.head > div {
+    background: var(--bg-2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    font-weight: 600;
+  }
+  .cheat-row .k {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .cheat-row .pfx {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+  }
+  .cheat-row .ex {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-soft);
+    font-size: 12px;
+  }
+
+  .tip-outro {
+    margin-top: 32px;
+    padding: 24px 28px;
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .tip-outro .outro-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    padding-top: 2px;
+    white-space: nowrap;
+  }
+  .tip-outro p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+  .tip-outro p + p { margin-top: 8px; color: var(--ink-soft); font-size: 13px; }
+  .tip-outro strong { color: var(--ink); font-weight: 600; }
+  .tip-outro .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: rgba(255,255,255,0.55); padding: 1px 6px; border-radius: 3px; color: var(--ink); }
+  @media (max-width: 720px) {
+    .tip-outro { grid-template-columns: 1fr; gap: 8px; }
+  }
+
+  /* ============= Unified next-post block (used across the series) ============= */
+  .next-post {
+    margin-top: 48px;
+    padding: 32px 36px;
+    background: var(--ink);
+    color: var(--bg);
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: center;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .next-post::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 100% 0%, rgba(255,77,46,0.12), transparent 55%);
+    pointer-events: none;
+  }
+  .next-post:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(22,22,29,0.22); }
+  @media (max-width: 720px) { .next-post { grid-template-columns: 1fr; padding: 24px; gap: 20px; } }
+  .next-post .np-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+  .next-post h4 {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 26px;
+    margin: 0 0 10px;
+    font-weight: 700;
+    color: white;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .next-post h4 .em {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .next-post p {
+    margin: 0;
+    color: rgba(255,255,255,0.72);
+    font-size: 14px;
+    line-height: 1.65;
+    max-width: 560px;
+  }
+  .next-post p strong { color: white; font-weight: 600; }
+  .next-post .np-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 24px;
+    background: var(--accent);
+    color: white;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    transition: background 0.18s, color 0.18s, transform 0.18s;
+    position: relative;
+    z-index: 1;
+  }
+  .next-post:hover .np-cta { background: white; color: var(--ink); transform: translateX(2px); }
+  .next-post .np-cta .arr { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif; font-style: italic; font-size: 18px; font-weight: 500; }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 56px 0 64px;
+    background: var(--bg);
+  }
+  .byline {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    padding-bottom: 32px;
+    border-bottom: 1px dashed var(--line);
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .byline::before {
+    content: '';
+    position: absolute;
+    top: -56px; left: 0;
+    width: 32px; height: 1px;
+    background: var(--accent);
+  }
+  .byline .avatar {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 3px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--line), 0 6px 20px rgba(22,22,29,0.10);
+    background: var(--paper);
+  }
+  .byline-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.18em;
+    margin-bottom: 8px;
+  }
+  .byline-label .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: 1px;
+  }
+  .byline-name {
+    font-family: 'Noto Serif SC', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+  }
+  .byline-name .em {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .byline-tag {
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    margin: 0;
+    max-width: 52ch;
+  }
+  .footer-meta {
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-mute);
+    letter-spacing: 0.05em;
+  }
+  .footer-meta .heart { color: var(--accent); }
+  .footer-meta .mono { color: var(--ink-soft); font-weight: 500; }
+  @media (max-width: 600px) {
+    .byline { flex-direction: column; text-align: center; align-items: center; gap: 16px; }
+    .byline-tag { margin-left: auto; margin-right: auto; }
+  }
+
+  /* Subtle entry animation */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  section { animation: fadeIn 0.6s ease-out backwards; }
+  a.brand { text-decoration: none; color: inherit; transition: color 0.2s; cursor: pointer; }
+  a.brand:hover { color: var(--accent); }
+  .brand-block { display: flex; align-items: center; min-width: 0; flex: 1; }
+  .brand-block .brand { flex-shrink: 0; }
+  .brand-arrow { margin-right: 6px; color: var(--ink-mute); display: inline-block; transition: transform 0.2s, color 0.2s; }
+  .brand:hover .brand-arrow { color: var(--accent); transform: translateX(-2px); }
+  .brand-sep { margin: 0 10px; color: var(--ink-mute); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 300; }
+  .brand-current { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; color: var(--ink-soft); letter-spacing: 0.02em; }
+  @media (max-width: 760px) { .brand-sep, .brand-current { display: none; } }
+  .byline-contact { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; }
+  .byline-contact .contact-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); padding: 2px 8px; border: 1px solid var(--line); border-radius: 3px; }
+  .byline-contact .contact-id { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--ink); background: var(--accent-soft); padding: 3px 10px; border-radius: 4px; letter-spacing: 0.02em; }
+  .byline-contact .contact-hint { font-size: 12px; color: var(--ink-soft); font-style: italic; }
+  /* === Roadmap Modal === */
+  .rm-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 30px 16px; }
+  .rm-modal[hidden] { display: none; }
+  .rm-backdrop { position: absolute; inset: 0; background: rgba(22,22,29,0.55); backdrop-filter: blur(4px); animation: rm-fade 0.2s; }
+  @keyframes rm-fade { from { opacity: 0; } to { opacity: 1; } }
+  .rm-dialog { position: relative; background: var(--bg); border-radius: 12px; max-width: 720px; width: 100%; max-height: calc(100vh - 60px); overflow-y: auto; padding: 32px 36px 24px; box-shadow: 0 30px 80px rgba(0,0,0,0.3); animation: rm-pop 0.25s cubic-bezier(0.4,0,0.2,1); }
+  @keyframes rm-pop { from { transform: scale(0.96) translateY(8px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+  .rm-close { position: absolute; top: 14px; right: 16px; background: transparent; border: none; cursor: pointer; font-size: 20px; color: var(--ink-mute); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.15s; line-height: 1; }
+  .rm-close:hover { background: var(--bg-2); color: var(--ink); }
+  .rm-header { margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px dashed var(--line); }
+  .rm-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
+  .rm-title { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-size: 28px; margin: 0 0 6px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.1; }
+  .rm-title .rm-em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; color: var(--accent); font-weight: 500; }
+  .rm-sub { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-mute); margin: 0; }
+  .rm-body { display: flex; flex-direction: column; gap: 18px; }
+  .rm-mod-key { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink); font-weight: 700; margin-bottom: 8px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .rm-mod-list { display: flex; flex-direction: column; gap: 6px; }
+  .rm-cell { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; padding: 9px 13px; border-radius: 5px; background: var(--paper); border: 1px solid var(--line); text-decoration: none; color: inherit; transition: all 0.15s; }
+  .rm-cell:hover { border-color: var(--accent); background: var(--accent-soft); transform: translateX(3px); }
+  .rm-cell-code { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif; font-style: italic; font-weight: 500; color: var(--accent); font-size: 15px; }
+  .rm-cell-name { font-size: 13px; color: var(--ink); }
+  .rm-cell-tier { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.08em; color: var(--ink-mute); text-transform: uppercase; border: 1px solid var(--line); padding: 2px 7px; border-radius: 3px; }
+  .rm-footer { margin-top: 22px; padding-top: 16px; border-top: 1px dashed var(--line); display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink-soft); flex-wrap: wrap; gap: 8px; }
+  .rm-wechat { font-family: 'JetBrains Mono', monospace; background: var(--accent-soft); color: var(--ink); padding: 3px 10px; border-radius: 3px; font-weight: 600; letter-spacing: 0.02em; }
+  .nav-links a[data-rm-open] { cursor: pointer; }
+
+  /* === footer byline === */
+  .byline-group, .byline-wrap.byline-group { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+  .byline-group .byline { display: flex; gap: 16px; align-items: flex-start; margin: 0; min-width: 0; }
+  .byline-group .avatar { width: 56px; height: 56px; flex-shrink: 0; }
+  .byline-group .byline-meta { min-width: 0; }
+  .byline-group .byline-name { font-size: 18px; }
+  .byline-group .byline-tag { font-size: 12px; line-height: 1.55; }
+  .byline-group .byline-contact { margin-top: 10px; padding-top: 10px; display: flex; align-items: flex-start; gap: 10px; flex-wrap: nowrap; }
+  .byline-group .byline-contact .contact-label { padding: 1px 6px; font-size: 10px; align-self: flex-start; }
+  .byline-group .byline-contact .contact-id { padding: 2px 8px; font-size: 12px; align-self: flex-start; }
+  .byline-group .byline-contact .contact-hint { font-size: 11px; line-height: 1.5; }
+  .byline-contact-text { display: flex; flex-direction: column; gap: 5px; min-width: 0; flex: 1; padding-top: 1px; }
+  .byline-contact .qr-card { width: 68px; height: 68px; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; flex-shrink: 0; position: relative; background: #fff; }
+  .byline-contact .qr-card.qr-empty { border-style: dashed; background: var(--accent-soft); }
+  .byline-contact .qr-card.qr-empty::after { content: "二维码\A 待补充"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; white-space: pre-line; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--ink-mute); letter-spacing: 0.05em; line-height: 1.5; }
+  .byline-contact .qr-card img { width: 100%; height: 100%; display: block; object-fit: cover; }
+  @media (max-width: 700px) {
+    .byline-group, .byline-wrap.byline-group { grid-template-columns: 1fr; gap: 18px; }
+    .byline-group .byline + .byline { padding-top: 18px; border-top: 1px dashed var(--line); }
+  }
+
+  
+  /* lesbian-flag-5color-band — topbar 底部 2px 5 色细 band */
+  .topbar {
+    background-image: linear-gradient(to right, #D52D00 0 14.28%, #EF7627 14.28% 28.57%, #FF9A56 28.57% 42.86%, #FFFFFF 42.86% 57.14%, #D162A4 57.14% 71.43%, #B55690 71.43% 85.71%, #EF7627 85.71% 100%) !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 2px !important;
+    background-position: bottom !important;
+  }
+
+/* === portfolio-inspired 入场 + hover 动效(米色基调统一)=== */
+@keyframes p-fade-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes p-fade-down { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes p-scale-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+
+.topbar { animation: p-fade-down 0.7s cubic-bezier(0.16,1,0.3,1) backwards; }
+.hero, header.hero { animation: p-fade-up 0.85s cubic-bezier(0.16,1,0.3,1) 0.15s backwards; }
+.section-head { animation: p-fade-up 0.8s cubic-bezier(0.16,1,0.3,1) backwards; }
+
+.rm-cell, .next-post, .j-node, .vol-tab, .hero-film-card, .nav-links a,
+.track-tab, .ld, .jp-filter, .hero-cinema-link {
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s ease-out, color 0.2s, background-color 0.2s;
+}
+.rm-cell:hover, .next-post:hover, .hero-film-card:hover, .vol-tab:hover {
+  transform: translateY(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar, .hero, .section-head { animation: none !important; }
+  .rm-cell, .next-post, .j-node, .vol-tab, .hero-film-card,
+  .nav-links a, .track-tab, .ld, .jp-filter, .hero-cinema-link {
+    transition: none !important;
+  }
+  .rm-cell:hover, .next-post:hover, .hero-film-card:hover, .vol-tab:hover {
+    transform: none !important;
+  }
+}
+
+  /* 字体分工:正文=阿里普惠体, 标题=阿里妈妈数黑体 */
+  html, body, p, span, div, a, button, input, textarea, select, label, li, td, th,
+  .lede, .desc, .section-sub, .hi-desc, .nav-links, .demo-label, .brand, .tier {
+    font-family: 'Alibaba PuHuiTi 3.0', '阿里巴巴普惠体 3.0', '阿里巴巴普惠体',
+                 system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif !important;
+  }
+  h1, h2, h3, h4, .display-en, .display-cn, .hi-title, .hc-title,
+  .section-title, .sc-mid, .si-title, .pv-title, .tv-title, .k-title,
+  .ch-title, .season-title, .ep-title, .nb-h,
+  [class*="-title"], [class$="-title"] {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', sans-serif !important;
+    font-style: normal !important;
+    font-weight: 700 !important;
+  }
+
+  /* footer 紧凑 + 白底 */
+  footer {
+    background: #ffffff !important;
+    padding: 32px 0 !important;
+    border-top: 1px solid #e4e4e7 !important;
+  }
+  footer .wrap { padding: 0 32px !important; }
+  footer .byline { gap: 14px !important; align-items: center !important; }
+  footer .avatar { width: 56px !important; height: 56px !important; }
+  footer .byline-name { font-size: 18px !important; margin: 4px 0 !important; line-height: 1.3 !important; }
+  footer .byline-tag { font-size: 13px !important; margin: 2px 0 0 !important; line-height: 1.4 !important; }
+  footer .byline-label { font-size: 10px !important; letter-spacing: 0.14em !important; }
+  footer .footer-meta { font-size: 11px !important; margin-top: 18px !important; padding-top: 18px !important; }
+
+  /* .em 和 .display-cn 用数黑 + 橙色 */
+  .em, .display-cn {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', sans-serif !important;
+    color: #EF7627 !important;
+  }
+
+  /* manifesto 文字填满 */
+  .manifesto p { max-width: 100% !important; }
+
+  /* roadmap 居中 + 缩小底部间距 */
+  .journey-svg {
+    transform-origin: 50% 0% !important;
+  }
+  section#roadmap, #roadmap {
+    padding-bottom: 24px !important;
+  }
+  .vol-panel { padding-bottom: 0 !important; margin-bottom: 0 !important; }
+
+  /* 子页清掉冗余引导文案 */
+  .lede, .section-sub { display: none !important; }
+
+  /* footer 文案统一左对齐 */
+  footer .footer-meta, .footer-meta {
+    text-align: left !important;
+    justify-content: flex-start !important;
+  }
+
+  /* 内页 hero 标题用黑色,不要橙色 */
+  header.hero h1 .em,
+  header.hero h1 .display-cn,
+  header.hero h1 .display-en,
+  header.hero h1 .x {
+    color: var(--ink, #0a0a0a) !important;
+  }
+
+  /* signature 渐变 · 7 色个人标识 */
+  :root {
+    --sig-grad: linear-gradient(90deg,
+      #D52D00 0%, #EF7627 18%, #FF9A56 33%,
+      #FFFFFF 50%,
+      #D162A4 67%, #B55690 82%, #A30262 100%);
+  }
+  /* 1. 站标 ● 改渐变签名球 */
+  .brand .dot {
+    background: var(--sig-grad) !important;
+    width: 10px !important;
+    height: 10px !important;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.04) !important;
+  }
+  /* 3. 顶部阅读进度条 · scroll-driven */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--sig-grad);
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    z-index: 9999;
+    pointer-events: none;
+    animation: sig-progress linear;
+    animation-timeline: scroll(root);
+  }
+  @keyframes sig-progress { to { transform: scaleX(1); } }
+  /* Safari fallback:不支持 scroll-timeline 时藏起来,不残留 */
+  @supports not (animation-timeline: scroll()) {
+    body::before { display: none; }
+  }
+
+  /* 去掉 topbar 底部 5 色 band(改用顶部进度条) */
+  .topbar {
+    background-image: none !important;
+  }
+
+  /* 已读环 + 进度条用 signature 渐变 */
+  .j-node.read .j-node-circle {
+    stroke: url(#sig-grad-svg) !important;
+    stroke-width: 2.5 !important;
+  }
+  .book-progress-fill {
+    background: var(--sig-grad) !important;
+  }
+
+  /* footer 右下角微信二维码 */
+  footer .wrap {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-rows: auto auto !important;
+    column-gap: 32px !important;
+    row-gap: 16px !important;
+    align-items: end !important;
+  }
+  footer .byline-group { grid-column: 1; grid-row: 1; }
+  footer .footer-meta { grid-column: 1; grid-row: 2; }
+  footer .footer-wechat {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    align-self: center;
+  }
+  .footer-wechat .wechat-qr {
+    width: 92px;
+    height: 92px;
+    border-radius: 6px;
+    border: 1px solid var(--line, #e4e4e7);
+    background: #fff;
+    display: block;
+  }
+  .footer-wechat .wechat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: var(--ink-mute, #6b6b75);
+    font-weight: 700;
+    text-align: center;
+  }
+  .footer-wechat .wechat-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink, #0a0a0a);
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  /* topbar 中间课程 CTA */
+  .course-cta {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 6px 14px !important;
+    border: 1px solid var(--line, #e4e4e7) !important;
+    border-radius: 100px !important;
+    font-family: 'Alibaba PuHuiTi 3.0', 'PingFang SC', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: var(--ink, #0a0a0a) !important;
+    text-decoration: none !important;
+    background: #fff !important;
+    transition: all 0.2s ease !important;
+    letter-spacing: 0.02em !important;
+    white-space: nowrap !important;
+  }
+  .course-cta:hover {
+    border-color: var(--accent, #EF7627) !important;
+    color: var(--accent, #EF7627) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(239,118,39,0.12) !important;
+  }
+  .course-cta .cta-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--sig-grad, #EF7627);
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .course-cta .cta-arrow {
+    font-size: 11px;
+    opacity: 0.55;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  .course-cta:hover .cta-arrow {
+    transform: translate(2px, -2px);
+    opacity: 1;
+  }
+  @media (max-width: 760px) {
+    .course-cta { font-size: 11px !important; padding: 5px 10px !important; }
+    .course-cta .cta-text { display: none; }
+  }
+
+  /* 去掉右上角 HOME tab(只一个 tab,没用) */
+  nav.vol-tabs { display: none !important; }
+
+  /* 修 .wf-btn.primary hover 被错误覆盖背景的问题 */
+  .wf-btn.primary:hover:not(:disabled) {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-color: var(--accent) !important;
+    filter: brightness(0.92);
+  }
+
+  /* 隐藏入口与路线图 */
+  #tracks, .track-switch, #x_alt-roadmap { display: none !important; }
+
+  /* 主页 manifesto → roadmap 之间补回视觉间隔 */
+  #roadmap {
+    position: relative;
+    margin-top: 56px !important;
+    padding-top: 88px !important;
+  }
+  #roadmap::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 1px;
+    background: var(--sig-grad, #EF7627);
+    opacity: 0.7;
+  }
+
+  /* footer 内的 REFERENCES 引用块隐藏(全站 footer 一致) */
+  footer .label, footer .source-list { display: none !important; }
+
+  /* topbar 三栏严格对齐:brand 左 / CTA 中 / nav 右 */
+  .topbar-inner {
+    display: grid !important;
+    grid-template-columns: 1fr auto 1fr !important;
+    align-items: center !important;
+    gap: 16px !important;
+  }
+  .topbar-inner .brand,
+  .topbar-inner .brand-block { justify-self: start; }
+  .topbar-inner .course-cta { justify-self: center; }
+  .topbar-inner .nav-links,
+  .topbar-inner nav.nav-links,
+  .topbar-inner nav.vol-tabs { justify-self: end; }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand-block"><a href="index.html#vol-3" class="brand"><span class="brand-arrow">←</span><span class="dot"></span>AI LABBOOK</a><span class="brand-sep">/</span><span class="brand-current">COLORS / TYPE / SPACING · TOKENS</span></div>
+    <a class="course-cta" href="https://xhslink.com/m/92BZZ1bF3xv" target="_blank" rel="noopener">
+      <span class="cta-dot"></span>
+      <span class="cta-text">给设计师的零基础 AI 课</span>
+      <span class="cta-arrow">↗</span>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html#vol-3" data-rm-open>路线图</a>
+    </nav>
+  </div>
+</div>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-meta">
+      <span class="pill fill">实验互动 · INTERACTIVE</span>
+      <span class="pill">2026 / 设计 × 代码</span>
+      <span class="pill">C1 · 基础 · 视觉系统</span>
+      <span class="label">阅读时长 ≈ 14 分钟</span>
+    </div>
+    <div class="hero-grid">
+      <div>
+        <h1>
+          <span class="display-cn">颜色</span>
+          <span class="slash">/</span>
+          <span class="display-cn">字号</span>
+          <span class="slash">/</span>
+          <span class="display-cn">间距</span><br>
+          <span class="em">三件事</span>，<br>
+          <span class="display-cn">一份 Token 表</span>
+        </h1>
+        <p class="lede">
+          Figma Variables 里的色板、字号阶梯、间距系统 ——<br>
+          这一篇讲清楚它们到代码里长什么样、命名怎么起、怎么用。
+        </p>
+      </div>
+      <div class="hero-side">
+        <div class="row"><span class="k">本页讲什么</span><span class="v">视觉系统 ↔ Tokens</span></div>
+        <div class="row"><span class="k">含互动</span><span class="v">3 个：高亮 / 比例 / 滑块</span></div>
+        <div class="row"><span class="k">面向</span><span class="v">设计师 / 前端</span></div>
+        <div class="row"><span class="k">前置知识</span><span class="v">C0 入门</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Section 1: Problem -->
+<section id="problem">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>01</strong> / 问题</div>
+        <h2 class="section-title">一个页面用了<br><span class="em">7 个相似的红</span>、<br>5 个相似的字号。</h2>
+      </div>
+      <p class="section-sub">
+        没系统的代价：前端凭感觉挑色，跟设计稿差半度；改稿一次，全站对齐失败。
+        Tokens 就是让"挑色"和"猜字号"这件事消失。
+      </p>
+    </div>
+
+    <div class="problem-grid">
+      <div class="problem-card bad">
+        <span class="tag">BAD · 散装值</span>
+        <h3>每次都现挑一个</h3>
+        <p>设计稿写 #FF4D2E，前端写 #ff5530，AI 看图猜了个 #f64a2c —— 同一个"品牌红"被实现了 7 次。改色等于改 7 个地方。</p>
+        <div class="chip-cloud bad">
+          <span class="chip"><span class="sw" style="background:#EF7627"></span>#FF4D2E</span>
+          <span class="chip"><span class="sw" style="background:#ff5530"></span>#FF5530</span>
+          <span class="chip"><span class="sw" style="background:#f64a2c"></span>#F64A2C</span>
+          <span class="chip"><span class="sw" style="background:#ff5040"></span>#FF5040</span>
+          <span class="chip"><span class="sw" style="background:#fc4928"></span>#FC4928</span>
+          <span class="chip"><span class="sw" style="background:#ff5235"></span>#FF5235</span>
+          <span class="chip"><span class="sw" style="background:#fa4530"></span>#FA4530</span>
+        </div>
+      </div>
+
+      <div class="problem-card good">
+        <span class="tag">GOOD · Tokens</span>
+        <h3>一个名字，一个值</h3>
+        <p>设计师定一个 <code class="mono" style="font-size:12px;background:white;padding:1px 5px;border-radius:3px">color/brand/primary</code>，前端写 <code class="mono" style="font-size:12px;background:white;padding:1px 5px;border-radius:3px">var(--color-brand-primary)</code>。改一次值，全站同步。这就是 Tokens 的全部意义。</p>
+        <div class="chip-cloud good">
+          <span class="chip"><span class="sw" style="background:#EF7627"></span>--color-brand-primary</span>
+          <span class="chip"><span class="sw" style="background:#EF7627"></span>--color-brand-primary</span>
+          <span class="chip"><span class="sw" style="background:#EF7627"></span>--color-brand-primary</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 2: Color Tokens -->
+<section id="colors">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>02</strong> / 颜色</div>
+        <h2 class="section-title">Figma Variables<br><span class="em">就是 CSS Variables</span>。</h2>
+      </div>
+      <p class="section-sub">
+        左边是 Figma Variables 面板（点点看），右边是它对应的 CSS 代码。
+        命名层次先按用途分（brand / text / bg / border），再按强弱分（primary / secondary / muted）。
+      </p>
+    </div>
+
+    <div class="colors-stage">
+      <!-- Figma-style Variables panel -->
+      <div class="fig-vars" id="figVars">
+        <div class="fig-vars-head">
+          <div class="icn"></div>
+          <div class="ttl">Local variables <small>· 11 items</small></div>
+        </div>
+        <div class="fig-vars-body">
+          <div class="fig-vars-group">
+            <div class="gh">color / brand</div>
+            <div class="fig-vars-row" data-var="--color-brand-primary"><span class="sw" style="background:#EF7627"></span><span class="nm">primary</span><span class="vl">#FF4D2E</span></div>
+            <div class="fig-vars-row" data-var="--color-brand-soft"><span class="sw" style="background:#ffe4dc"></span><span class="nm">soft</span><span class="vl">#FFE4DC</span></div>
+          </div>
+
+          <div class="fig-vars-group">
+            <div class="gh">color / text</div>
+            <div class="fig-vars-row" data-var="--color-text-primary"><span class="sw" style="background:#16161d"></span><span class="nm">primary</span><span class="vl">#16161D</span></div>
+            <div class="fig-vars-row" data-var="--color-text-secondary"><span class="sw" style="background:#4a4a55"></span><span class="nm">secondary</span><span class="vl">#4A4A55</span></div>
+            <div class="fig-vars-row" data-var="--color-text-muted"><span class="sw" style="background:#8a8a92"></span><span class="nm">muted</span><span class="vl">#8A8A92</span></div>
+          </div>
+
+          <div class="fig-vars-group">
+            <div class="gh">color / bg</div>
+            <div class="fig-vars-row" data-var="--color-bg-canvas"><span class="sw" style="background:#f7f4ec"></span><span class="nm">canvas</span><span class="vl">#F3EEE5</span></div>
+            <div class="fig-vars-row" data-var="--color-bg-paper"><span class="sw" style="background:#faf7f0"></span><span class="nm">paper</span><span class="vl">#FAF7F0</span></div>
+            <div class="fig-vars-row" data-var="--color-bg-sunken"><span class="sw" style="background:#e4e4e7"></span><span class="nm">sunken</span><span class="vl">#EBE4D4</span></div>
+          </div>
+
+          <div class="fig-vars-group">
+            <div class="gh">color / border</div>
+            <div class="fig-vars-row" data-var="--color-border-default"><span class="sw" style="background:#e4e4e7"></span><span class="nm">default</span><span class="vl">#D5CDBA</span></div>
+            <div class="fig-vars-row" data-var="--color-border-soft"><span class="sw" style="background:#e3dcca"></span><span class="nm">soft</span><span class="vl">#E3DCCA</span></div>
+            <div class="fig-vars-row" data-var="--color-border-strong"><span class="sw" style="background:#16161d"></span><span class="nm">strong</span><span class="vl">#16161D</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CSS code with highlighted active row -->
+      <div class="colors-code" id="colorsCode">
+        <div class="colors-code-head">
+          <span class="dots"></span>
+          <span class="fn">tokens.css</span>
+        </div>
+        <div class="colors-code-body">
+<div class="ln"><span class="csel">:root</span> {</div>
+<div class="ln indent"><span class="ccom">/* color / brand */</span></div>
+<div class="ln indent" data-var="--color-brand-primary"><span class="ckey">--color-brand-primary</span>: <span class="cstr">#EF7627</span>;</div>
+<div class="ln indent" data-var="--color-brand-soft"><span class="ckey">--color-brand-soft</span>: <span class="cstr">#ffe4dc</span>;</div>
+<div class="ln indent">&nbsp;</div>
+<div class="ln indent"><span class="ccom">/* color / text */</span></div>
+<div class="ln indent" data-var="--color-text-primary"><span class="ckey">--color-text-primary</span>: <span class="cstr">#16161d</span>;</div>
+<div class="ln indent" data-var="--color-text-secondary"><span class="ckey">--color-text-secondary</span>: <span class="cstr">#4a4a55</span>;</div>
+<div class="ln indent" data-var="--color-text-muted"><span class="ckey">--color-text-muted</span>: <span class="cstr">#8a8a92</span>;</div>
+<div class="ln indent">&nbsp;</div>
+<div class="ln indent"><span class="ccom">/* color / bg */</span></div>
+<div class="ln indent" data-var="--color-bg-canvas"><span class="ckey">--color-bg-canvas</span>: <span class="cstr">#f7f4ec</span>;</div>
+<div class="ln indent" data-var="--color-bg-paper"><span class="ckey">--color-bg-paper</span>: <span class="cstr">#faf7f0</span>;</div>
+<div class="ln indent" data-var="--color-bg-sunken"><span class="ckey">--color-bg-sunken</span>: <span class="cstr">#e4e4e7</span>;</div>
+<div class="ln indent">&nbsp;</div>
+<div class="ln indent"><span class="ccom">/* color / border */</span></div>
+<div class="ln indent" data-var="--color-border-default"><span class="ckey">--color-border-default</span>: <span class="cstr">#e4e4e7</span>;</div>
+<div class="ln indent" data-var="--color-border-soft"><span class="ckey">--color-border-soft</span>: <span class="cstr">#e3dcca</span>;</div>
+<div class="ln indent" data-var="--color-border-strong"><span class="ckey">--color-border-strong</span>: <span class="cstr">#16161d</span>;</div>
+<div class="ln">}</div>
+<div class="ln">&nbsp;</div>
+<div class="ln"><span class="ccom">/* 用法：var(--color-brand-primary) */</span></div>
+<div class="ln"><span class="csel">.btn-primary</span> {</div>
+<div class="ln indent"><span class="ckey">background</span>: <span class="cval">var(--color-brand-primary)</span>;</div>
+<div class="ln indent"><span class="ckey">color</span>: <span class="cval">var(--color-bg-paper)</span>;</div>
+<div class="ln">}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="colors-hint">
+      <strong>点左边任意一个变量</strong>，右边代码同名的那行会高亮 ——
+      <span class="mono">color/brand/primary</span> 在 Figma 里是分组路径，到代码里就是
+      <span class="mono">--color-brand-primary</span>，一一对应。
+    </div>
+
+    <!-- Mapping table -->
+    <div class="mapping" style="margin-top: 32px">
+      <div class="mapping-head">
+        <div>FIGMA / 设计视角</div>
+        <div></div>
+        <div>CSS / 代码视角</div>
+      </div>
+      <div class="mapping-row">
+        <div>
+          <div class="figma-name"><span class="sw" style="background:#EF7627"></span>color/brand/primary</div>
+          <div class="desc">Variables 面板里的分组路径</div>
+        </div>
+        <div>=</div>
+        <div>
+          <div class="css-name">--color-brand-primary: #EF7627</div>
+          <div class="desc">把 / 替换成 - 就是变量名</div>
+        </div>
+      </div>
+      <div class="mapping-row">
+        <div>
+          <div class="figma-name">引用变量到 Fill</div>
+          <div class="desc">点 fill 旁的菱形图标，选 token</div>
+        </div>
+        <div>≈</div>
+        <div>
+          <div class="css-name">background: var(--color-brand-primary);</div>
+          <div class="desc">var(...) 表示"读这个变量的值"</div>
+        </div>
+      </div>
+      <div class="mapping-row">
+        <div>
+          <div class="figma-name">改 Variable 的值</div>
+          <div class="desc">所有引用过它的图层一起变</div>
+        </div>
+        <div>=</div>
+        <div>
+          <div class="css-name">改 :root 里那一行</div>
+          <div class="desc">所有 var(...) 的地方一起更新</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Color palette grid -->
+    <div class="palette-grid">
+      <div class="palette-swatch"><div class="color" style="background:#EF7627"></div><div class="meta"><div class="nm">brand-primary</div><div class="hx">#FF4D2E</div></div></div>
+      <div class="palette-swatch"><div class="color" style="background:#ffe4dc"></div><div class="meta"><div class="nm">brand-soft</div><div class="hx">#FFE4DC</div></div></div>
+      <div class="palette-swatch"><div class="color" style="background:#16161d"></div><div class="meta"><div class="nm">text-primary</div><div class="hx">#16161D</div></div></div>
+      <div class="palette-swatch"><div class="color" style="background:#4a4a55"></div><div class="meta"><div class="nm">text-secondary</div><div class="hx">#4A4A55</div></div></div>
+      <div class="palette-swatch"><div class="color" style="background:#8a8a92"></div><div class="meta"><div class="nm">text-muted</div><div class="hx">#8A8A92</div></div></div>
+      <div class="palette-swatch"><div class="color" style="background:#f7f4ec"></div><div class="meta"><div class="nm">bg-canvas</div><div class="hx">#F3EEE5</div></div></div>
+      <div class="palette-swatch"><div class="color" style="background:#faf7f0"></div><div class="meta"><div class="nm">bg-paper</div><div class="hx">#FAF7F0</div></div></div>
+      <div class="palette-swatch"><div class="color" style="background:#e4e4e7"></div><div class="meta"><div class="nm">bg-sunken</div><div class="hx">#EBE4D4</div></div></div>
+      <div class="palette-swatch"><div class="color" style="background:#e4e4e7"></div><div class="meta"><div class="nm">border-default</div><div class="hx">#D5CDBA</div></div></div>
+      <div class="palette-swatch"><div class="color" style="background:#e3dcca"></div><div class="meta"><div class="nm">border-soft</div><div class="hx">#E3DCCA</div></div></div>
+      <div class="palette-swatch"><div class="color" style="background:#1f6b3a"></div><div class="meta"><div class="nm">success</div><div class="hx">#1F6B3A</div></div></div>
+      <div class="palette-swatch"><div class="color" style="background:#ffcf3d"></div><div class="meta"><div class="nm">warning</div><div class="hx">#FFCF3D</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 3: Type Scale -->
+<section id="type">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>03</strong> / 字号</div>
+        <h2 class="section-title">字号<span class="em">不是随便挑</span>的，<br>是一道阶梯。</h2>
+      </div>
+      <p class="section-sub">
+        Figma 里叫 Text Styles，代码里叫 <code class="mono" style="font-size:14px;background:var(--bg-2);padding:1px 6px;border-radius:3px">--font-size-*</code>。
+        阶梯的关键是<strong style="color:var(--ink)">比例</strong>—— 选一个比例系数（1.2、1.25、1.333…），整套字号自动算出来。
+      </p>
+    </div>
+
+    <div class="type-stage">
+      <div class="type-preview">
+        <div class="type-preview-head">
+          <span class="lab">type / scale · 预览</span>
+          <span class="lab">PX</span>
+        </div>
+        <div class="type-preview-body" id="typeRows">
+          <div class="type-row" data-step="4">
+            <div class="nm"><strong>display</strong><br>step +4</div>
+            <div class="sample" data-base="16">设计 × 代码</div>
+            <div class="px"><span class="px-val">39</span>px</div>
+          </div>
+          <div class="type-row" data-step="3">
+            <div class="nm"><strong>h1</strong><br>step +3</div>
+            <div class="sample" data-base="16">把概念讲清楚</div>
+            <div class="px"><span class="px-val">31</span>px</div>
+          </div>
+          <div class="type-row" data-step="2">
+            <div class="nm"><strong>h2</strong><br>step +2</div>
+            <div class="sample" data-base="16">章节标题</div>
+            <div class="px"><span class="px-val">25</span>px</div>
+          </div>
+          <div class="type-row" data-step="1">
+            <div class="nm"><strong>h3</strong><br>step +1</div>
+            <div class="sample" data-base="16">小节标题</div>
+            <div class="px"><span class="px-val">20</span>px</div>
+          </div>
+          <div class="type-row" data-step="0">
+            <div class="nm"><strong>body</strong><br>step 0</div>
+            <div class="sample" data-base="16">正文，基准 16</div>
+            <div class="px"><span class="px-val">16</span>px</div>
+          </div>
+          <div class="type-row" data-step="-1">
+            <div class="nm"><strong>small</strong><br>step −1</div>
+            <div class="sample" data-base="16">辅助说明</div>
+            <div class="px"><span class="px-val">13</span>px</div>
+          </div>
+          <div class="type-row" data-step="-2">
+            <div class="nm"><strong>caption</strong><br>step −2</div>
+            <div class="sample" data-base="16">脚注 / 元信息</div>
+            <div class="px"><span class="px-val">10</span>px</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="type-controls">
+        <h4>选一个比例</h4>
+        <p class="desc">每一档的字号 = 上一档 × 比例。比例越大，字号差距越夸张；越小，整体越统一。试试切换：</p>
+
+        <div class="ratio-seg" id="ratioSeg">
+          <button data-r="1.125"><span class="r-num">1.125</span><span class="r-nm">conservative</span></button>
+          <button class="active" data-r="1.25"><span class="r-num">1.25</span><span class="r-nm">major 3rd</span></button>
+          <button data-r="1.333"><span class="r-num">1.333</span><span class="r-nm">perfect 4th</span></button>
+          <button data-r="1.618"><span class="r-num">1.618</span><span class="r-nm">golden</span></button>
+        </div>
+
+        <div class="ratio-formula">
+<span class="ccom">/* type scale 自动算公式 */</span>
+<span class="csel">:root</span> {
+  <span class="ckey">--font-base</span>: <span class="cval">16px</span>;
+  <span class="ckey">--type-ratio</span>: <span class="cval"><span class="hl" id="rdRatio">1.25</span></span>;
+
+  <span class="ccom">/* 每一档 = base × ratio<sup>step</sup> */</span>
+  <span class="ckey">--font-size-display</span>: <span class="cval"><span id="rdDisplay">39.06</span>px</span>;
+  <span class="ckey">--font-size-h1</span>:      <span class="cval"><span id="rdH1">31.25</span>px</span>;
+  <span class="ckey">--font-size-h2</span>:      <span class="cval"><span id="rdH2">25.00</span>px</span>;
+  <span class="ckey">--font-size-h3</span>:      <span class="cval"><span id="rdH3">20.00</span>px</span>;
+  <span class="ckey">--font-size-body</span>:    <span class="cval"><span id="rdBody">16.00</span>px</span>;
+  <span class="ckey">--font-size-small</span>:   <span class="cval"><span id="rdSmall">12.80</span>px</span>;
+  <span class="ckey">--font-size-caption</span>: <span class="cval"><span id="rdCaption">10.24</span>px</span>;
+}
+        </div>
+
+        <div class="colors-hint" style="margin-top:18px">
+          <strong>为什么是比例？</strong>因为视觉上有"舒服的层级感" —— 类似音乐里的和弦。
+          1.25（大三度）、1.333（纯四度）、1.618（黄金比）都是经典选项。
+          <strong>选定一个比例，就别再瞎调中间值。</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 4: Spacing Scale -->
+<section id="spacing">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>04</strong> / 间距</div>
+        <h2 class="section-title">间距也是 <span class="em">Tokens</span>，<br>不是 8 就是 16。</h2>
+      </div>
+      <p class="section-sub">
+        4 / 8 系统：所有间距都从 4px 起步，逐档翻倍或加 4。<br>
+        改一档，整页 padding / gap 同步变 —— 试一下右边的滑块。
+      </p>
+    </div>
+
+    <div class="space-stage">
+      <div>
+        <div class="space-canvas">
+          <div class="space-canvas-head">
+            <div class="ttl"><strong>Card · 用 token 拼出来的</strong></div>
+            <div>预览</div>
+          </div>
+          <div class="space-card" id="spaceCard" style="padding: 16px; gap: 12px;">
+            <div class="space-card-head" style="gap: 12px">
+              <div class="av"></div>
+              <div class="info">
+                <div class="ttl">范米花儿</div>
+                <div class="sub">@designer · 2026</div>
+              </div>
+            </div>
+            <div class="space-card-body">
+              一份关于盒子模型和 Auto Layout 的实验讲解，希望对正在用 AI 还原设计稿的你有帮助。
+            </div>
+            <div class="space-card-actions" style="gap: 8px">
+              <div class="btn">关注</div>
+              <div class="btn alt">私信</div>
+            </div>
+          </div>
+
+          <div class="ruler-strip">
+            <div class="lab">Spacing scale · 4 / 8 system</div>
+            <div class="ruler-bars-wrap">
+              <div class="ruler-bars" id="rulerBars">
+                <div class="ruler-bar" style="width: 4px; height: 4px"><div class="px">4</div><div class="nm">--space-1</div></div>
+                <div class="ruler-bar" style="width: 8px; height: 8px"><div class="px">8</div><div class="nm">--space-2</div></div>
+                <div class="ruler-bar" style="width: 12px; height: 12px"><div class="px">12</div><div class="nm">--space-3</div></div>
+                <div class="ruler-bar" style="width: 16px; height: 16px"><div class="px">16</div><div class="nm">--space-4</div></div>
+                <div class="ruler-bar" style="width: 24px; height: 24px"><div class="px">24</div><div class="nm">--space-6</div></div>
+                <div class="ruler-bar" style="width: 32px; height: 32px"><div class="px">32</div><div class="nm">--space-8</div></div>
+                <div class="ruler-bar" style="width: 48px; height: 48px"><div class="px">48</div><div class="nm">--space-12</div></div>
+                <div class="ruler-bar" style="width: 64px; height: 64px"><div class="px">64</div><div class="nm">--space-16</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-controls">
+        <h4>调整 Token 值</h4>
+        <p class="desc">这两个滑块改的是 <code class="mono" style="font-size:11px;background:var(--bg-2);padding:1px 5px;border-radius:3px">--space-4</code> 和 <code class="mono" style="font-size:11px;background:var(--bg-2);padding:1px 5px;border-radius:3px">--space-3</code> 的值。注意整个卡片的呼吸感同步变化。</p>
+
+        <div class="ctrl">
+          <div class="ctrl-head">
+            <span class="ctrl-label">--space-4 · 卡片 padding</span>
+            <span class="ctrl-value" id="space4Val">16px</span>
+          </div>
+          <input type="range" id="space4Slider" min="4" max="40" step="4" value="16">
+        </div>
+
+        <div class="ctrl">
+          <div class="ctrl-head">
+            <span class="ctrl-label">--space-3 · 头像与名字间距</span>
+            <span class="ctrl-value" id="space3Val">12px</span>
+          </div>
+          <input type="range" id="space3Slider" min="4" max="32" step="4" value="12">
+        </div>
+
+        <div class="ctrl">
+          <div class="ctrl-head">
+            <span class="ctrl-label">--space-2 · 按钮之间</span>
+            <span class="ctrl-value" id="space2Val">8px</span>
+          </div>
+          <input type="range" id="space2Slider" min="4" max="24" step="4" value="8">
+        </div>
+
+        <div class="space-readout">
+<span class="ccom">/* 同步生成 */</span>
+<span class="csel">.card</span> {
+  <span class="ckey">padding</span>: <span class="cval">var(--space-4)</span>; <span class="ccom">/* <span id="rdSpace4">16</span>px */</span>
+  <span class="ckey">gap</span>:     <span class="cval">var(--space-3)</span>; <span class="ccom">/* <span id="rdSpace3">12</span>px */</span>
+}
+<span class="csel">.card-actions</span> {
+  <span class="ckey">gap</span>: <span class="cval">var(--space-2)</span>; <span class="ccom">/* <span id="rdSpace2">8</span>px */</span>
+}
+        </div>
+      </div>
+    </div>
+
+    <div class="colors-hint" style="margin-top: 24px">
+      <strong>为什么固定 4 / 8 系统？</strong>因为屏幕的物理像素就是 4 / 8 的倍数最锐利，
+      而且数字少了选择困难症 —— <span class="mono">--space-3</span> 和 <span class="mono">--space-4</span> 二选一，比"13px 还是 14px"轻松一万倍。
+    </div>
+  </div>
+</section>
+
+<!-- Section 5: Other tokens -->
+<section id="other">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>05</strong> / 其他</div>
+        <h2 class="section-title">圆角 · 阴影 · 边框 ——<br><span class="em">同样是 Tokens</span>。</h2>
+      </div>
+      <p class="section-sub">
+        除了三大件（颜色 / 字号 / 间距），剩下几类常用 token 也是一回事：定一组阶梯，按名字用。
+        速查一下，看着眼熟就够了。
+      </p>
+    </div>
+
+    <div class="other-grid">
+      <div class="other-card">
+        <div class="head">
+          <h4>圆角 / radius</h4>
+          <span class="pfx">--radius-*</span>
+        </div>
+        <div class="preview">
+          <div class="r-tile s"></div>
+          <div class="r-tile m"></div>
+          <div class="r-tile l"></div>
+          <div class="r-tile xl"></div>
+        </div>
+        <div class="row"><span class="k">--radius-sm</span><span class="v">2px</span></div>
+        <div class="row"><span class="k">--radius-md</span><span class="v">6px</span></div>
+        <div class="row"><span class="k">--radius-lg</span><span class="v">12px</span></div>
+        <div class="row"><span class="k">--radius-pill</span><span class="v">999px</span></div>
+      </div>
+
+      <div class="other-card">
+        <div class="head">
+          <h4>阴影 / shadow</h4>
+          <span class="pfx">--shadow-*</span>
+        </div>
+        <div class="preview" style="background: var(--bg-2)">
+          <div class="sh-tile sm"></div>
+          <div class="sh-tile md"></div>
+          <div class="sh-tile lg"></div>
+        </div>
+        <div class="row"><span class="k">--shadow-sm</span><span class="v">0 1 2 / .10</span></div>
+        <div class="row"><span class="k">--shadow-md</span><span class="v">0 4 12 / .10</span></div>
+        <div class="row"><span class="k">--shadow-lg</span><span class="v">0 12 32 / .18</span></div>
+      </div>
+
+      <div class="other-card">
+        <div class="head">
+          <h4>边框 / border</h4>
+          <span class="pfx">--border-*</span>
+        </div>
+        <div class="preview">
+          <div class="bd-tile sm"></div>
+          <div class="bd-tile md"></div>
+          <div class="bd-tile lg"></div>
+        </div>
+        <div class="row"><span class="k">--border-sm</span><span class="v">1px</span></div>
+        <div class="row"><span class="k">--border-md</span><span class="v">2px</span></div>
+        <div class="row"><span class="k">--border-lg</span><span class="v">4px</span></div>
+      </div>
+    </div>
+
+    <div class="code-panel" style="margin-top: 28px">
+<span class="filename">tokens.css · 完整结构示意</span>
+<span class="csel">:root</span> {
+  <span class="ccom">/* 1 · 颜色 */</span>
+  <span class="ckey">--color-brand-primary</span>:   <span class="cstr">#EF7627</span>;
+  <span class="ckey">--color-text-primary</span>:    <span class="cstr">#16161d</span>;
+  <span class="ckey">--color-bg-paper</span>:        <span class="cstr">#faf7f0</span>;
+
+  <span class="ccom">/* 2 · 字号 */</span>
+  <span class="ckey">--font-size-display</span>:     <span class="cval">39px</span>;
+  <span class="ckey">--font-size-body</span>:        <span class="cval">16px</span>;
+  <span class="ckey">--line-height-tight</span>:     <span class="cval">1.2</span>;
+  <span class="ckey">--line-height-relaxed</span>:   <span class="cval">1.6</span>;
+
+  <span class="ccom">/* 3 · 间距 */</span>
+  <span class="ckey">--space-1</span>:  <span class="cval">4px</span>;
+  <span class="ckey">--space-2</span>:  <span class="cval">8px</span>;
+  <span class="ckey">--space-4</span>:  <span class="cval">16px</span>;
+  <span class="ckey">--space-8</span>:  <span class="cval">32px</span>;
+
+  <span class="ccom">/* 4 · 圆角 */</span>
+  <span class="ckey">--radius-md</span>:             <span class="cval">6px</span>;
+  <span class="ckey">--radius-pill</span>:           <span class="cval">999px</span>;
+
+  <span class="ccom">/* 5 · 阴影 */</span>
+  <span class="ckey">--shadow-md</span>:             <span class="cval">0 4px 12px rgba(22,22,29,0.10)</span>;
+}
+    </div>
+  </div>
+</section>
+
+<!-- Section 6: Practice + next -->
+<section id="practice">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>06</strong> / 实践</div>
+        <h2 class="section-title">回到工作流：<br>从今天起，<span class="em">用名字</span>，<br>不要用值。</h2>
+      </div>
+      <p class="section-sub">
+        Tokens 不是新鲜玩意，但它是后面所有视觉系统的地基。三条规矩记住，剩下的就是熟练度问题。
+      </p>
+    </div>
+
+    <div class="tips-grid">
+      <div class="tip">
+        <div class="tip-num">i</div>
+        <h4>用 Semantic，别用 Literal</h4>
+        <p>命名是 <code class="mono">--color-brand-primary</code>，不是 <code class="mono">--color-orange</code>。前者你换主题色不用改名字，后者就是个笑话。</p>
+      </div>
+      <div class="tip">
+        <div class="tip-num">ii</div>
+        <h4>分组比扁平更清晰</h4>
+        <p>用 <code class="mono">color/text/primary</code> 这种斜杠分组，到代码里变 <code class="mono">--color-text-primary</code>。<strong style="color:var(--ink)">用途 → 强弱</strong>，两层就够。</p>
+      </div>
+      <div class="tip">
+        <div class="tip-num">iii</div>
+        <h4>能用 token 就别用值</h4>
+        <p>Figma 里点菱形图标接 token，前端写 <code class="mono">var(--*)</code> 而不是 <code class="mono">#EF7627</code>。一个团队能不能换主题，全看这一条。</p>
+      </div>
+    </div>
+
+    <!-- Cheat sheet -->
+    <div class="cheat">
+      <div class="cheat-head">
+        <span class="ttl">5 大类 Tokens · 速查</span>
+        <span class="lab">CHEAT SHEET</span>
+      </div>
+      <div class="cheat-table">
+        <div class="cheat-row head">
+          <div>类别</div>
+          <div>命名前缀</div>
+          <div>典型用法</div>
+        </div>
+        <div class="cheat-row">
+          <div class="k">颜色 / Color</div>
+          <div class="pfx">--color-{用途}-{强弱}</div>
+          <div class="ex">background: var(--color-brand-primary)</div>
+        </div>
+        <div class="cheat-row">
+          <div class="k">字号 / Type</div>
+          <div class="pfx">--font-size-{阶梯}</div>
+          <div class="ex">font-size: var(--font-size-h2)</div>
+        </div>
+        <div class="cheat-row">
+          <div class="k">间距 / Spacing</div>
+          <div class="pfx">--space-{数字}</div>
+          <div class="ex">padding: var(--space-4)</div>
+        </div>
+        <div class="cheat-row">
+          <div class="k">圆角 / Radius</div>
+          <div class="pfx">--radius-{档位}</div>
+          <div class="ex">border-radius: var(--radius-md)</div>
+        </div>
+        <div class="cheat-row">
+          <div class="k">阴影 / Shadow</div>
+          <div class="pfx">--shadow-{档位}</div>
+          <div class="ex">box-shadow: var(--shadow-lg)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip-outro">
+      <div class="outro-tag">划重点 · TL;DR</div>
+      <div>
+        <p>Figma Variables 和 CSS Variables <strong>是同一件事的两种界面</strong>——前者用面板点，后者用 <span class="mono">var(--*)</span> 写。命名规则定下来，整个团队就能对得上。</p>
+        <p>设计师常踩的坑：色板做了 30 个但代码里只用了 5 个。<strong>多余的会让前端混乱、AI 抓错色。</strong> 留住你<span class="mono">真用上</span>的那一组就够了。</p>
+      </div>
+    </div>
+
+    <a href="theme-switch-figma.html" class="next-post">
+      <div>
+        <div class="np-tag">下一篇 · NEXT · C2</div>
+        <h4>Theme 切换实战</h4>
+        <p>继续往下一篇。</p>
+      </div>
+      <span class="np-cta">下一篇 <span class="arr">→</span></span>
+    </a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="byline-group">
+    <div class="byline">
+      <img class="avatar" src="author.jpg" alt="范米花儿">
+      <div class="byline-meta">
+        <div class="byline-label"><span class="dot"></span>作者 · WRITTEN BY</div>
+        <h3 class="byline-name">嗨，我是 <span class="em">范米花儿</span></h3>
+        <p class="byline-tag">设计工程师 ——<br>设计 × 代码，两边都做。</p>
+      </div>
+    </div>
+</div>
+        <div class="footer-wechat">
+      <img class="wechat-qr" src="wechat-qr.png" alt="范米花儿 微信二维码">
+      <div class="wechat-meta">
+        <div class="wechat-label">微信 · WECHAT</div>
+        <div class="wechat-id">vanvan_0422</div>
+      </div>
+    </div>
+    <div class="footer-meta">
+      做于 <span class="mono">2026</span> · 用 <span class="heart">●</span> 写给 <span class="mono">DESIGNERS &amp; DEVELOPERS</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ================ §02 Colors: Figma Variables row ↔ CSS row sync ================
+(function() {
+  const figRows = document.querySelectorAll('#figVars .fig-vars-row');
+  const codeRows = document.querySelectorAll('#colorsCode .ln[data-var]');
+
+  function setActive(varName) {
+    figRows.forEach(r => r.classList.toggle('is-active', r.dataset.var === varName));
+    codeRows.forEach(r => r.classList.toggle('is-active', r.dataset.var === varName));
+  }
+  function clearActive() {
+    figRows.forEach(r => r.classList.remove('is-active'));
+    codeRows.forEach(r => r.classList.remove('is-active'));
+  }
+
+  figRows.forEach(r => {
+    r.addEventListener('mouseenter', () => setActive(r.dataset.var));
+    r.addEventListener('click', () => {
+      // Pin highlight on click; clear other pins, then set this one
+      const wasPinned = r.classList.contains('is-pinned');
+      figRows.forEach(x => x.classList.remove('is-pinned'));
+      codeRows.forEach(x => x.classList.remove('is-pinned'));
+      if (!wasPinned) {
+        r.classList.add('is-pinned');
+        const cr = document.querySelector(`#colorsCode .ln[data-var="${r.dataset.var}"]`);
+        if (cr) cr.classList.add('is-pinned');
+        setActive(r.dataset.var);
+      } else {
+        clearActive();
+      }
+    });
+  });
+  codeRows.forEach(r => {
+    r.addEventListener('mouseenter', () => setActive(r.dataset.var));
+  });
+
+  document.getElementById('figVars').addEventListener('mouseleave', () => {
+    // restore pinned highlight if any
+    const pinned = document.querySelector('#figVars .fig-vars-row.is-pinned');
+    if (pinned) setActive(pinned.dataset.var); else clearActive();
+  });
+  document.getElementById('colorsCode').addEventListener('mouseleave', () => {
+    const pinned = document.querySelector('#figVars .fig-vars-row.is-pinned');
+    if (pinned) setActive(pinned.dataset.var); else clearActive();
+  });
+})();
+
+// ================ §03 Type Scale: ratio control ================
+(function() {
+  const seg = document.getElementById('ratioSeg');
+  const btns = seg.querySelectorAll('button');
+  const rows = document.querySelectorAll('#typeRows .type-row');
+  const rdRatio = document.getElementById('rdRatio');
+  const rdMap = {
+    4: document.getElementById('rdDisplay'),
+    3: document.getElementById('rdH1'),
+    2: document.getElementById('rdH2'),
+    1: document.getElementById('rdH3'),
+    0: document.getElementById('rdBody'),
+    '-1': document.getElementById('rdSmall'),
+    '-2': document.getElementById('rdCaption'),
+  };
+
+  function applyRatio(r) {
+    const base = 16;
+    rdRatio.textContent = r;
+    rows.forEach(row => {
+      const step = parseInt(row.dataset.step, 10);
+      const px = base * Math.pow(r, step);
+      const sample = row.querySelector('.sample');
+      const pxLabel = row.querySelector('.px-val');
+      sample.style.fontSize = px + 'px';
+      pxLabel.textContent = px.toFixed(0);
+      const target = rdMap[step];
+      if (target) target.textContent = px.toFixed(2);
+      // Briefly flash the row
+      row.classList.add('is-active');
+      clearTimeout(row._t);
+      row._t = setTimeout(() => row.classList.remove('is-active'), 350);
+    });
+  }
+
+  btns.forEach(b => {
+    b.addEventListener('click', () => {
+      btns.forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      applyRatio(parseFloat(b.dataset.r));
+    });
+  });
+
+  // Initial application with the default 1.25
+  applyRatio(1.25);
+})();
+
+// ================ §04 Spacing: sliders ================
+(function() {
+  const card = document.getElementById('spaceCard');
+  const cardHead = card.querySelector('.space-card-head');
+  const cardActions = card.querySelector('.space-card-actions');
+
+  const s4 = document.getElementById('space4Slider');
+  const s3 = document.getElementById('space3Slider');
+  const s2 = document.getElementById('space2Slider');
+
+  const s4Val = document.getElementById('space4Val');
+  const s3Val = document.getElementById('space3Val');
+  const s2Val = document.getElementById('space2Val');
+
+  const rd4 = document.getElementById('rdSpace4');
+  const rd3 = document.getElementById('rdSpace3');
+  const rd2 = document.getElementById('rdSpace2');
+
+  function update() {
+    const v4 = +s4.value;
+    const v3 = +s3.value;
+    const v2 = +s2.value;
+
+    card.style.padding = v4 + 'px';
+    card.style.gap = v3 + 'px';
+    cardHead.style.gap = v3 + 'px';
+    cardActions.style.gap = v2 + 'px';
+
+    s4Val.textContent = v4 + 'px';
+    s3Val.textContent = v3 + 'px';
+    s2Val.textContent = v2 + 'px';
+
+    rd4.textContent = v4;
+    rd3.textContent = v3;
+    rd2.textContent = v2;
+  }
+
+  s4.addEventListener('input', update);
+  s3.addEventListener('input', update);
+  s2.addEventListener('input', update);
+  update();
+})();
+</script>
+
+
+<!-- 路线图弹窗 (10 分类) -->
+<div class="rm-modal" id="rm-modal" hidden>
+  <div class="rm-backdrop" data-rm-close></div>
+  <div class="rm-dialog" role="dialog" aria-label="完整路线图">
+    <button class="rm-close" data-rm-close aria-label="关闭">✕</button>
+    <div class="rm-header">
+      <div class="rm-tag">阅读顺序 · ROADMAP</div>
+      <h3 class="rm-title">START → 10 分类 <span class="rm-em">·</span> 35 篇</h3>
+      <p class="rm-sub">01 界面拆解 5 · 02 视觉系统 3 · 03 状态动作 3 · 04 样式翻译 4 · 05 AI 实现 4 · 06 组件材料 3 · 07 项目启动 4 · 08 调试 3 · 09 协作 3 · 10 上线 3</p>
+    </div>
+    <div class="rm-body">
+      <div class="rm-mod">
+        <div class="rm-mod-key">01 · 界面怎么被代码拆开</div>
+        <div class="rm-mod-list">
+          <a href="basics-figma.html" class="rm-cell"><span class="rm-cell-code">A0</span><span class="rm-cell-name">三件套 · HTML / CSS / JS</span><span class="rm-cell-tier">入门</span></a>
+          <a href="box-figma.html" class="rm-cell"><span class="rm-cell-code">A1</span><span class="rm-cell-name">盒子 · Auto Layout</span><span class="rm-cell-tier">基础</span></a>
+          <a href="components-figma.html" class="rm-cell"><span class="rm-cell-code">A2</span><span class="rm-cell-name">组件 · Variants &amp; Props</span><span class="rm-cell-tier">基础</span></a>
+          <a href="button-system-figma.html" class="rm-cell"><span class="rm-cell-code">A3</span><span class="rm-cell-name">Button System · 组件演化</span><span class="rm-cell-tier">进阶</span></a>
+          <a href="page-figma.html" class="rm-cell"><span class="rm-cell-code">B0</span><span class="rm-cell-name">拼页面 · 组件嵌套</span><span class="rm-cell-tier">入门</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">02 · 视觉规则怎么变成系统</div>
+        <div class="rm-mod-list">
+          <a href="tokens-figma.html" class="rm-cell"><span class="rm-cell-code">C0</span><span class="rm-cell-name">Variables / Tokens 入门</span><span class="rm-cell-tier">入门</span></a>
+          <a href="colors-type-figma.html" class="rm-cell"><span class="rm-cell-code">C1</span><span class="rm-cell-name">Colors / Type / Spacing</span><span class="rm-cell-tier">基础</span></a>
+          <a href="theme-switch-figma.html" class="rm-cell"><span class="rm-cell-code">C2</span><span class="rm-cell-name">Theme 切换实战</span><span class="rm-cell-tier">进阶</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">03 · 界面怎么有状态和动作</div>
+        <div class="rm-mod-list">
+          <a href="states-figma.html" class="rm-cell"><span class="rm-cell-code">D0</span><span class="rm-cell-name">视觉态 · 看得见的状态</span><span class="rm-cell-tier">入门</span></a>
+          <a href="interactive-figma.html" class="rm-cell"><span class="rm-cell-code">D1</span><span class="rm-cell-name">Interactive Component</span><span class="rm-cell-tier">基础</span></a>
+          <a href="transition-figma.html" class="rm-cell"><span class="rm-cell-code">D2</span><span class="rm-cell-name">动画 · Transition</span><span class="rm-cell-tier">进阶</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">04 · 设计样式怎么翻译成 CSS</div>
+        <div class="rm-mod-list">
+          <a href="inverted-radius-figma.html" class="rm-cell"><span class="rm-cell-code">S1</span><span class="rm-cell-name">内翻圆角 · Inverted Border Radius</span><span class="rm-cell-tier">样式</span></a>
+          <a href="shadow-layer-figma.html" class="rm-cell"><span class="rm-cell-code">S2</span><span class="rm-cell-name">阴影 / 层级 · Shadow &amp; Elevation</span><span class="rm-cell-tier">样式</span></a>
+          <a href="glass-blur-figma.html" class="rm-cell"><span class="rm-cell-code">S3</span><span class="rm-cell-name">毛玻璃 / 背景模糊 · Backdrop Blur</span><span class="rm-cell-tier">样式</span></a>
+          <a href="mask-crop-figma.html" class="rm-cell"><span class="rm-cell-code">S4</span><span class="rm-cell-name">遮罩 / 裁切 · Mask &amp; Clip</span><span class="rm-cell-tier">样式</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key" style="color:var(--accent);">05 · AI 怎么参与实现</div>
+        <div class="rm-mod-list">
+          <a href="q1-mcp-figma.html" class="rm-cell"><span class="rm-cell-code">Q1</span><span class="rm-cell-name">MCP · AI 的 USB 接口</span><span class="rm-cell-tier">工具</span></a>
+          <a href="q2-skills-figma.html" class="rm-cell"><span class="rm-cell-code">Q2</span><span class="rm-cell-name">Skills · SKILL.md 拆解</span><span class="rm-cell-tier">工具</span></a>
+          <a href="q3-agent-figma.html" class="rm-cell"><span class="rm-cell-code">Q3</span><span class="rm-cell-name">Agent · 团队式 AI</span><span class="rm-cell-tier">工具</span></a>
+          <a href="k4-mcp-reads-figma.html" class="rm-cell"><span class="rm-cell-code">K4</span><span class="rm-cell-name">MCP 读了啥 · AI 看到的设计稿</span><span class="rm-cell-tier">基础</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">06 · 用什么材料搭界面</div>
+        <div class="rm-mod-list">
+          <a href="k1-ui-library-figma.html" class="rm-cell"><span class="rm-cell-code">K1</span><span class="rm-cell-name">UI 库 · shadcn vs Antd</span><span class="rm-cell-tier">基础</span></a>
+          <a href="k2-shadcn-customize-figma.html" class="rm-cell"><span class="rm-cell-code">K2</span><span class="rm-cell-name">shadcn 改造 · 变成你家的</span><span class="rm-cell-tier">基础</span></a>
+          <a href="k3-granularity-figma.html" class="rm-cell"><span class="rm-cell-code">K3</span><span class="rm-cell-name">颗粒度的代价 · AI 拼不准的根因</span><span class="rm-cell-tier">基础</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">07 · 项目怎么跑起来</div>
+        <div class="rm-mod-list">
+          <a href="f1-npm-figma.html" class="rm-cell"><span class="rm-cell-code">F1</span><span class="rm-cell-name">npm 是什么</span><span class="rm-cell-tier">工程</span></a>
+          <a href="f2-import-figma.html" class="rm-cell"><span class="rm-cell-code">F2</span><span class="rm-cell-name">import 与路径</span><span class="rm-cell-tier">工程</span></a>
+          <a href="f3-dev-build-figma.html" class="rm-cell"><span class="rm-cell-code">F3</span><span class="rm-cell-name">dev vs build</span><span class="rm-cell-tier">工程</span></a>
+          <a href="f4-hidden-files-figma.html" class="rm-cell"><span class="rm-cell-code">F4</span><span class="rm-cell-name">看不见的文件</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">08 · 坏了怎么查</div>
+        <div class="rm-mod-list">
+          <a href="h1-devtools-elements-figma.html" class="rm-cell"><span class="rm-cell-code">H1</span><span class="rm-cell-name">DevTools Elements</span><span class="rm-cell-tier">工程</span></a>
+          <a href="h2-console-error-figma.html" class="rm-cell"><span class="rm-cell-code">H2</span><span class="rm-cell-name">Console 报错</span><span class="rm-cell-tier">工程</span></a>
+          <a href="h3-network-figma.html" class="rm-cell"><span class="rm-cell-code">H3</span><span class="rm-cell-name">Network 面板</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">09 · 怎么协作</div>
+        <div class="rm-mod-list">
+          <a href="g1-commit-branch-figma.html" class="rm-cell"><span class="rm-cell-code">G1</span><span class="rm-cell-name">commit / branch</span><span class="rm-cell-tier">工程</span></a>
+          <a href="g2-conflict-figma.html" class="rm-cell"><span class="rm-cell-code">G2</span><span class="rm-cell-name">冲突怎么解</span><span class="rm-cell-tier">工程</span></a>
+          <a href="g3-pr-review-figma.html" class="rm-cell"><span class="rm-cell-code">G3</span><span class="rm-cell-name">PR / Review</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">10 · 怎么上线</div>
+        <div class="rm-mod-list">
+          <a href="j1-dns-figma.html" class="rm-cell"><span class="rm-cell-code">J1</span><span class="rm-cell-name">DNS / 域名</span><span class="rm-cell-tier">工程</span></a>
+          <a href="j2-vercel-figma.html" class="rm-cell"><span class="rm-cell-code">J2</span><span class="rm-cell-name">Vercel 部署</span><span class="rm-cell-tier">工程</span></a>
+          <a href="j3-cache-cdn-figma.html" class="rm-cell"><span class="rm-cell-code">J3</span><span class="rm-cell-name">缓存 / CDN</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var modal = document.getElementById('rm-modal');
+  if (!modal) return;
+  var openBtns = document.querySelectorAll('[data-rm-open]');
+  var closeBtns = modal.querySelectorAll('[data-rm-close]');
+  function open() { modal.hidden = false; document.body.style.overflow = 'hidden'; }
+  function close() { modal.hidden = true; document.body.style.overflow = ''; }
+  openBtns.forEach(function(b){ b.addEventListener('click', function(e){ e.preventDefault(); open(); }); });
+  closeBtns.forEach(function(b){ b.addEventListener('click', close); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !modal.hidden) close(); });
+})();
+</script>
+
+<script>
+/* inject signature gradient defs into journey SVG */
+(function(){
+  function inject(){
+    var svg = document.getElementById('journey-svg');
+    if(!svg || svg.querySelector('#sig-grad-svg')) return;
+    var ns = 'http://www.w3.org/2000/svg';
+    var defs = document.createElementNS(ns,'defs');
+    var lg = document.createElementNS(ns,'linearGradient');
+    lg.setAttribute('id','sig-grad-svg');
+    lg.setAttribute('x1','0'); lg.setAttribute('y1','0');
+    lg.setAttribute('x2','1'); lg.setAttribute('y2','1');
+    var stops = [
+      ['0%','#D52D00'], ['18%','#EF7627'], ['33%','#FF9A56'],
+      ['50%','#F7F4EC'],
+      ['67%','#D162A4'], ['82%','#B55690'], ['100%','#A30262']
+    ];
+    stops.forEach(function(s){
+      var st = document.createElementNS(ns,'stop');
+      st.setAttribute('offset',s[0]);
+      st.setAttribute('stop-color',s[1]);
+      lg.appendChild(st);
+    });
+    defs.appendChild(lg);
+    svg.insertBefore(defs, svg.firstChild);
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',inject);
+  } else { inject(); }
+})();
+</script>
+</body>
+</html>

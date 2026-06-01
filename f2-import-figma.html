@@ -1,0 +1,3144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>./ 还是 ../  — 路径是从哪儿出发</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  @font-face {
+    font-family: 'Alimama ShuHeiTi';
+    src: local('Alimama ShuHeiTi VF'),
+         local('Alimama ShuHeiTi'),
+         local('阿里妈妈数黑体'),
+         url('fonts/AlimamaShuHeiTi-Bold.woff2') format('woff2');
+    font-weight: 400 900;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --bg: #f7f4ec;
+    --bg-2: #e4e4e7;
+    --ink: #16161d;
+    --ink-soft: #4a4a55;
+    --ink-mute: #8a8a92;
+    --line: #e4e4e7;
+    --line-soft: #e3dcca;
+    --accent: #EF7627;
+    --accent-soft: #ffe4dc;
+    --blue: #0a4cff;
+    --blue-soft: #dde6ff;
+    --green: #1f6b3a;
+    --green-soft: #d4ecdb;
+    --yellow: #ffcf3d;
+    --paper: #faf7f0;
+    --shadow: 0 1px 0 rgba(0,0,0,0.04), 0 8px 24px rgba(22,22,29,0.06);
+
+    /* path/folder color hints */
+    --c-pages: #6b4c9a;
+    --c-pages-soft: #ece1ff;
+    --c-comp: #b06c00;
+    --c-comp-soft: #fff0d4;
+    --c-lib: #1f6b3a;
+    --c-lib-soft: #d4ecdb;
+    --c-styles: #0a4cff;
+    --c-styles-soft: #dde6ff;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Geist', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(circle at 1px 1px, rgba(22,22,29,0.05) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+
+  /* Typography */
+  .display-cn { font-family: 'Noto Serif SC', 'Inter', 'PingFang SC', system-ui, sans-serif; font-weight: 900; letter-spacing: -0.01em; }
+  .display-en { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'Inter', 'PingFang SC', system-ui, sans-serif; font-weight: 600; font-style: italic; letter-spacing: -0.02em; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .label { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+
+  /* topbar */
+  .topbar {
+    border-bottom: 1px dashed var(--line);
+    padding: 16px 0;
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-inner { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .brand { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }
+  .brand .dot { display: inline-block; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; margin-right: 8px; vertical-align: middle; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .nav-links { display: flex; gap: 18px; font-size: 13px; flex-wrap: wrap; }
+  .nav-links a { color: var(--ink-soft); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-links a.current { color: var(--accent); font-weight: 600; }
+  a.brand { text-decoration: none; color: inherit; transition: color 0.2s; cursor: pointer; }
+  a.brand:hover { color: var(--accent); }
+  .brand-block { display: flex; align-items: center; min-width: 0; flex: 1; }
+  .brand-block .brand { flex-shrink: 0; }
+  .brand-arrow { margin-right: 6px; color: var(--ink-mute); display: inline-block; transition: transform 0.2s, color 0.2s; }
+  .brand:hover .brand-arrow { color: var(--accent); transform: translateX(-2px); }
+  .brand-sep { margin: 0 10px; color: var(--ink-mute); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 300; }
+  .brand-current { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; color: var(--ink-soft); letter-spacing: 0.02em; }
+  @media (max-width: 760px) { .brand-sep, .brand-current { display: none; } }
+
+  /* hero */
+  .hero { padding: 100px 0 80px; position: relative; overflow: hidden; }
+  .hero-meta { display: flex; gap: 24px; margin-bottom: 32px; align-items: center; flex-wrap: wrap; }
+  .hero-meta .pill { padding: 6px 12px; border: 1px solid var(--ink); border-radius: 100px; font-size: 11px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em; }
+  .hero-meta .pill.fill { background: var(--ink); color: var(--bg); }
+  .hero h1 {
+    font-family: 'Noto Serif SC', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(46px, 6.5vw, 84px);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    margin: 0 0 24px;
+  }
+  .hero h1 .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-weight: 500; color: var(--accent); }
+  .hero h1 .x { display: inline-block; transform: translateY(-0.05em); margin: 0 0.05em; color: var(--ink-mute); font-weight: 300; }
+  .hero h1 .mono-em {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 0.78em;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+    background: var(--accent-soft);
+    padding: 2px 14px;
+    border-radius: 6px;
+    vertical-align: 0.06em;
+  }
+  .hero p.lede { font-size: 20px; line-height: 1.5; max-width: 640px; color: var(--ink-soft); margin: 0 0 40px; }
+  .hero p.lede .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; color: var(--accent); font-weight: 500; }
+  .hero p.lede code { font-family: 'JetBrains Mono', monospace; font-size: 0.86em; background: var(--bg-2); padding: 1px 7px; border-radius: 3px; color: var(--ink); }
+  .hero-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 48px; align-items: end; }
+  @media (max-width: 880px) { .hero-grid { grid-template-columns: 1fr; } }
+  .hero-side { border-left: 1px dashed var(--line); padding-left: 24px; font-size: 13px; color: var(--ink-soft); }
+  .hero-side .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--line); gap: 12px; }
+  .hero-side .row:last-child { border-bottom: none; }
+  .hero-side .row .k { color: var(--ink-mute); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; flex-shrink: 0; }
+  .hero-side .row .v { font-weight: 500; text-align: right; }
+
+  /* section */
+  section { padding: 80px 0; border-top: 1px solid var(--line); position: relative; animation: fadeIn 0.6s ease-out backwards; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 48px; flex-wrap: wrap; gap: 16px; }
+  .section-num { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink-mute); letter-spacing: 0.1em; }
+  .section-num strong { color: var(--accent); }
+  .section-title {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 900;
+    font-size: clamp(32px, 4.5vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0;
+    max-width: 18ch;
+  }
+  .section-title .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-weight: 500; color: var(--accent); }
+  .section-sub { color: var(--ink-soft); font-size: 17px; max-width: 38ch; line-height: 1.55; margin: 0; }
+
+  .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-weight: 500; color: var(--accent); }
+
+  /* hint strip */
+  .hint-strip {
+    margin-top: 16px;
+    padding: 14px 18px;
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.55;
+  }
+  .hint-strip .hint-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    margin-right: 10px;
+    text-transform: uppercase;
+  }
+  .hint-strip code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: rgba(255,255,255,0.6); padding: 1px 6px; border-radius: 3px; }
+
+  /* quote */
+  .quote-box {
+    margin: 32px 0 0;
+    padding: 24px 28px;
+    background: var(--paper);
+    border-left: 3px solid var(--ink);
+    border-radius: 0 6px 6px 0;
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .quote-box .quote-mark {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    color: var(--accent);
+    font-size: 28px;
+    line-height: 1;
+    margin-right: 8px;
+    font-weight: 500;
+  }
+  .quote-box .quote-attr {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    margin-top: 12px;
+    letter-spacing: 0.05em;
+    font-weight: 400;
+  }
+
+  /* ============= §01 Office floor plan ============= */
+  .office-stage {
+    margin-top: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .office-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 0;
+    min-height: 540px;
+  }
+  @media (max-width: 880px) { .office-grid { grid-template-columns: 1fr; } }
+
+  .office-canvas {
+    background: var(--paper);
+    background-image:
+      linear-gradient(rgba(22,22,29,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(22,22,29,0.04) 1px, transparent 1px);
+    background-size: 16px 16px;
+    padding: 28px 32px;
+    border-right: 1px solid var(--line);
+    position: relative;
+  }
+  @media (max-width: 880px) { .office-canvas { border-right: none; border-bottom: 1px solid var(--line); } }
+  .office-building {
+    border: 1.5px solid var(--ink);
+    border-radius: 6px;
+    background: white;
+    overflow: hidden;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .office-roof {
+    background: var(--ink);
+    color: white;
+    padding: 10px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    letter-spacing: 0.04em;
+  }
+  .office-roof .roof-tag { color: var(--accent); }
+  .office-roof .roof-rt { color: rgba(255,255,255,0.5); font-size: 10px; letter-spacing: 0.1em; }
+  .office-floor {
+    padding: 14px 16px;
+    border-bottom: 1px dashed var(--line);
+    cursor: pointer;
+    transition: background 0.18s;
+  }
+  .office-floor:last-child { border-bottom: none; }
+  .office-floor.is-active { background: var(--accent-soft); }
+  .office-floor-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .office-floor-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .office-floor-name .of-icon {
+    display: inline-block;
+    width: 12px; height: 10px;
+    background: var(--ink-mute);
+    border-radius: 2px 2px 0 0;
+    margin-right: 8px;
+    vertical-align: -1px;
+  }
+  .office-floor.is-active .of-icon { background: var(--accent); }
+  .office-floor-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.08em;
+  }
+  .office-floor.is-active .office-floor-num { color: var(--accent); }
+  .office-desks {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .office-desk {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .office-desk:hover { border-color: var(--ink); color: var(--ink); transform: translateY(-1px); }
+  .office-desk.is-active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .office-info {
+    padding: 28px 32px;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .office-info-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .office-info-name {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .office-info-name .pin {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-right: 10px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    vertical-align: 3px;
+  }
+  .office-info-desc {
+    color: var(--ink-soft);
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0;
+  }
+  .office-info-desc code,
+  .office-info-meta code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    background: var(--bg-2);
+    color: var(--ink);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .office-info-section {
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+  }
+  .office-info-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .office-info-meta {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .office-info-meta strong { color: var(--ink); font-weight: 600; }
+
+  /* ============= §02 Three paths ============= */
+  .paths-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: 24px;
+  }
+  @media (max-width: 880px) { .paths-grid { grid-template-columns: 1fr; } }
+  .path-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .path-card .path-head {
+    background: var(--ink);
+    color: white;
+    padding: 14px 18px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .path-card .path-symbol {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .path-card .path-headline {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 14px;
+    color: white;
+    font-weight: 500;
+  }
+  .path-card .path-body {
+    padding: 22px 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+  }
+  .path-card h4 {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 19px;
+    margin: 0;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+  .path-card h4 .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; color: var(--accent); font-weight: 500; }
+  .path-card .path-1liner {
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .path-card .path-1liner strong { color: var(--ink); font-weight: 600; }
+  .path-card .path-1liner code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: var(--bg-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+  .path-card .path-snippet {
+    background: var(--ink);
+    border-radius: 5px;
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #d8d8e0;
+    overflow-x: auto;
+  }
+  .path-card .path-snippet .ckw  { color: #c8a3ff; }
+  .path-card .path-snippet .cstr { color: #a8e6a3; }
+  .path-card .path-snippet .csym { color: var(--accent); }
+  .path-card .path-snippet .ccomment { color: #6e6e7a; }
+  .path-card .path-snippet .cident { color: #ffce8a; }
+  .path-card .path-when {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    background: var(--bg-2);
+    padding: 8px 12px;
+    border-radius: 4px;
+    line-height: 1.5;
+  }
+  .path-card .path-when strong { color: var(--ink); font-weight: 600; }
+
+  /* tiny mini-map under each card */
+  .path-mini {
+    display: grid;
+    grid-template-columns: 1fr 28px 1fr;
+    align-items: center;
+    background: var(--bg);
+    border: 1px dashed var(--line);
+    border-radius: 5px;
+    padding: 10px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    gap: 4px;
+  }
+  .path-mini .pm-cell {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 4px 6px;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .path-mini .pm-cell.from { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+  .path-mini .pm-cell.to { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .path-mini .pm-arrow { color: var(--accent); font-weight: 700; text-align: center; font-size: 14px; }
+
+  /* ============= §03 Path maze game ============= */
+  .maze-stage {
+    margin-top: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .maze-grid {
+    display: grid;
+    grid-template-columns: 0.95fr 1.1fr;
+    gap: 0;
+    min-height: 580px;
+  }
+  @media (max-width: 880px) { .maze-grid { grid-template-columns: 1fr; min-height: auto; } }
+
+  /* left: file tree */
+  .maze-tree-wrap {
+    background: var(--bg-2);
+    border-right: 1px solid var(--line);
+    padding: 24px 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  @media (max-width: 880px) { .maze-tree-wrap { border-right: none; border-bottom: 1px solid var(--line); } }
+  .maze-tree-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .maze-tree-title {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--ink);
+  }
+  .maze-tree {
+    background: white;
+    border: 1.5px solid var(--ink);
+    border-radius: 6px;
+    padding: 16px 18px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.95;
+    box-shadow: 4px 4px 0 var(--ink);
+    flex: 1;
+  }
+  .maze-tree .mt-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 1px 6px;
+    margin: 0 -6px;
+    border-radius: 3px;
+    transition: all 0.18s;
+    position: relative;
+  }
+  .maze-tree .mt-row .mt-pad { color: var(--ink-mute); white-space: pre; user-select: none; }
+  .maze-tree .mt-row .mt-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px; height: 14px;
+    flex-shrink: 0;
+  }
+  .maze-tree .mt-row .mt-name { color: var(--ink); }
+  .maze-tree .mt-row.mt-folder .mt-name { color: var(--ink); font-weight: 600; }
+  .maze-tree .mt-row.mt-file .mt-name { color: var(--ink-soft); }
+  .maze-tree .mt-row.is-from {
+    background: rgba(22,22,29,0.85);
+    color: white;
+  }
+  .maze-tree .mt-row.is-from .mt-name { color: white; font-weight: 700; }
+  .maze-tree .mt-row.is-from .mt-pad { color: rgba(255,255,255,0.4); }
+  .maze-tree .mt-row.is-from::after {
+    content: 'YOU';
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    background: var(--accent);
+    color: white;
+    padding: 1px 6px;
+    border-radius: 2px;
+    margin-left: auto;
+    font-weight: 700;
+  }
+  .maze-tree .mt-row.is-to {
+    background: var(--accent-soft);
+    border: 1px dashed var(--accent);
+    margin: 1px -6px;
+  }
+  .maze-tree .mt-row.is-to .mt-name { color: var(--accent); font-weight: 700; }
+  .maze-tree .mt-row.is-to::after {
+    content: 'TARGET';
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-left: auto;
+    font-weight: 700;
+  }
+  .maze-tree .mt-folder-icon {
+    width: 12px; height: 10px;
+    background: var(--ink-mute);
+    border-radius: 2px;
+    position: relative;
+  }
+  .maze-tree .mt-folder-icon::before {
+    content: '';
+    position: absolute;
+    top: -3px; left: 0;
+    width: 6px; height: 4px;
+    background: var(--ink-mute);
+    border-radius: 1px 1px 0 0;
+  }
+  .maze-tree .mt-row.is-from .mt-folder-icon,
+  .maze-tree .mt-row.is-from .mt-folder-icon::before { background: white; }
+  .maze-tree .mt-file-dot {
+    width: 7px; height: 7px;
+    background: var(--ink-mute);
+    border-radius: 50%;
+  }
+  .maze-tree .mt-row.is-from .mt-file-dot { background: white; }
+  .maze-tree .mt-row.is-to .mt-file-dot { background: var(--accent); }
+
+  /* right: round panel */
+  .maze-panel {
+    padding: 24px 28px 28px;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .maze-progress {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .maze-progress-track {
+    display: flex;
+    gap: 6px;
+  }
+  .maze-progress-track .mpt-dot {
+    width: 18px; height: 6px;
+    background: var(--line);
+    border-radius: 100px;
+    transition: all 0.25s;
+  }
+  .maze-progress-track .mpt-dot.is-current { background: var(--accent); width: 32px; }
+  .maze-progress-track .mpt-dot.is-done { background: var(--ink); }
+  .maze-progress-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+  .maze-progress-meta strong { color: var(--ink); font-weight: 700; }
+  .maze-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.05em;
+    text-align: right;
+  }
+  .maze-score strong { color: var(--accent); font-weight: 700; font-size: 14px; }
+
+  .maze-task {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 18px 20px;
+  }
+  .maze-task-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .maze-task-q {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    margin: 0 0 14px;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+  .maze-task-q .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; color: var(--accent); font-weight: 500; }
+  .maze-task-route {
+    display: grid;
+    grid-template-columns: 1fr 24px 1fr;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px dashed var(--line);
+    border-radius: 5px;
+  }
+  .maze-task-route .mtr-cell {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: white;
+    border: 1px solid var(--line);
+    padding: 6px 10px;
+    border-radius: 4px;
+    text-align: center;
+    line-height: 1.3;
+    color: var(--ink-soft);
+  }
+  .maze-task-route .mtr-cell.from {
+    border-color: var(--ink);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .maze-task-route .mtr-cell.to {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .maze-task-route .mtr-cell .mtr-sub {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    color: var(--ink-mute);
+    margin-top: 2px;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  .maze-task-route .mtr-cell.from .mtr-sub { color: var(--ink-mute); }
+  .maze-task-route .mtr-cell.to .mtr-sub { color: var(--accent); opacity: 0.7; }
+  .maze-task-route .mtr-arrow {
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    text-align: center;
+    font-weight: 700;
+  }
+
+  .maze-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 480px) { .maze-options { grid-template-columns: 1fr; } }
+  .maze-opt {
+    background: white;
+    border: 1.5px solid var(--line);
+    border-radius: 5px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+    text-align: left;
+    line-height: 1.4;
+    position: relative;
+    user-select: none;
+  }
+  .maze-opt:hover:not(.is-locked) {
+    border-color: var(--ink);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(22,22,29,0.08);
+  }
+  .maze-opt::before {
+    content: attr(data-key);
+    position: absolute;
+    top: -8px; left: 14px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--ink-mute);
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.05em;
+  }
+  .maze-opt.is-correct {
+    background: var(--green-soft);
+    border-color: var(--green);
+    color: var(--green);
+  }
+  .maze-opt.is-correct::before { background: var(--green); border-color: var(--green); color: white; }
+  .maze-opt.is-wrong {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .maze-opt.is-wrong::before { background: var(--accent); border-color: var(--accent); color: white; }
+  .maze-opt.is-locked { cursor: default; }
+  .maze-opt.is-dim { opacity: 0.5; }
+  .maze-opt-trail {
+    display: block;
+    font-size: 10px;
+    color: var(--ink-mute);
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.02em;
+  }
+  .maze-opt.is-correct .maze-opt-trail { color: var(--green); }
+  .maze-opt.is-wrong .maze-opt-trail { color: var(--accent); opacity: 0.85; }
+
+  .maze-feedback {
+    padding: 14px 18px;
+    background: var(--bg);
+    border-left: 3px solid var(--ink-mute);
+    border-radius: 0 5px 5px 0;
+    font-size: 13.5px;
+    color: var(--ink);
+    line-height: 1.6;
+    min-height: 56px;
+    transition: all 0.2s;
+  }
+  .maze-feedback .mf-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .maze-feedback.is-good { border-left-color: var(--green); background: var(--green-soft); }
+  .maze-feedback.is-good .mf-tag { color: var(--green); }
+  .maze-feedback.is-bad { border-left-color: var(--accent); background: var(--accent-soft); }
+  .maze-feedback.is-bad .mf-tag { color: var(--accent); }
+  .maze-feedback strong { color: var(--ink); font-weight: 700; }
+  .maze-feedback code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: rgba(255,255,255,0.6);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+
+  .maze-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding-top: 6px;
+    flex-wrap: wrap;
+  }
+  .maze-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    padding: 10px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: white;
+    transition: all 0.15s;
+  }
+  .maze-btn:hover { background: var(--accent); border-color: var(--accent); }
+  .maze-btn.maze-btn-ghost {
+    background: transparent;
+    color: var(--ink-soft);
+    border-color: var(--line);
+  }
+  .maze-btn.maze-btn-ghost:hover { color: var(--ink); border-color: var(--ink-mute); background: var(--bg-2); }
+  .maze-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+  .maze-btn[disabled]:hover { background: var(--ink); border-color: var(--ink); }
+
+  /* finish overlay */
+  .maze-finish {
+    background: var(--ink);
+    color: white;
+    border-radius: 8px;
+    padding: 28px 30px;
+    text-align: center;
+    margin-top: -2px;
+    position: relative;
+    overflow: hidden;
+  }
+  .maze-finish::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(255,77,46,0.18), transparent 60%);
+    pointer-events: none;
+  }
+  .maze-finish .mfin-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .maze-finish h4 {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 28px;
+    margin: 0 0 8px;
+    font-weight: 800;
+    color: white;
+  }
+  .maze-finish h4 .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; color: var(--accent); font-weight: 500; }
+  .maze-finish p {
+    color: rgba(255,255,255,0.7);
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0 0 14px;
+  }
+  .maze-finish .mfin-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: white;
+    background: rgba(255,255,255,0.08);
+    padding: 8px 14px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 14px;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .maze-finish .mfin-score strong { color: var(--accent); font-weight: 700; font-size: 18px; }
+  .maze-finish button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    padding: 10px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: white;
+    transition: all 0.15s;
+  }
+  .maze-finish button:hover { background: white; color: var(--ink); border-color: white; }
+
+  /* ============= §04 alias config ============= */
+  .alias-stage {
+    margin-top: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .alias-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  @media (max-width: 880px) { .alias-grid { grid-template-columns: 1fr; } }
+  .alias-pane {
+    padding: 24px 28px;
+    border-right: 1px solid var(--line);
+  }
+  .alias-pane:last-child { border-right: none; border-top: 1px solid var(--line); }
+  @media (min-width: 881px) { .alias-pane:last-child { border-top: none; } }
+  @media (max-width: 880px) { .alias-pane { border-right: none; } }
+  .alias-pane.is-config { background: var(--ink); color: #d8d8e0; padding: 0; border-right: none; }
+  .alias-pane-head {
+    padding: 14px 22px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .alias-pane-head .apt { color: var(--accent); }
+  .alias-pane-body {
+    padding: 22px 26px 26px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.85;
+    overflow-x: auto;
+  }
+  .alias-pane-body .ckey { color: #ff8a6e; }
+  .alias-pane-body .cstr { color: #a8e6a3; }
+  .alias-pane-body .cnum { color: #8ec5ff; }
+  .alias-pane-body .cpunc { color: #6e6e7a; }
+  .alias-pane-body .ccomment { color: #6e6e7a; font-style: normal; }
+  .alias-pane-body .hl-line {
+    background: rgba(255,138,110,0.14);
+    border-left: 2px solid #ff8a6e;
+    margin: 0 -26px;
+    padding: 0 26px 0 24px;
+    display: block;
+  }
+
+  .alias-explain {
+    padding: 28px 30px;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .alias-explain h4 {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 22px;
+    margin: 0;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+  .alias-explain h4 .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; color: var(--accent); font-weight: 500; }
+  .alias-explain p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .alias-explain p strong { color: var(--ink); font-weight: 600; }
+  .alias-explain p code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    background: var(--bg-2);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+  .alias-translate {
+    padding: 14px 16px;
+    background: var(--bg-2);
+    border-radius: 5px;
+    border-left: 3px solid var(--accent);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .alias-translate .at-row {
+    display: grid;
+    grid-template-columns: 1fr 24px 1fr;
+    gap: 10px;
+    align-items: center;
+    margin: 4px 0;
+  }
+  .alias-translate .at-cell {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: white;
+    padding: 4px 8px;
+    border-radius: 3px;
+    text-align: center;
+    border: 1px solid var(--line);
+  }
+  .alias-translate .at-cell.from { color: var(--accent); font-weight: 600; border-color: var(--accent); background: var(--accent-soft); }
+  .alias-translate .at-cell.to { color: var(--ink); font-weight: 600; }
+  .alias-translate .at-arrow { color: var(--accent); font-weight: 700; text-align: center; }
+
+  .alias-warn {
+    padding: 14px 16px;
+    background: var(--accent-soft);
+    border-radius: 5px;
+    border-left: 3px solid var(--accent);
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.55;
+  }
+  .alias-warn .aw-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-right: 8px;
+  }
+  .alias-warn code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: rgba(255,255,255,0.6);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* ============= §05 import errors ============= */
+  .err-stage {
+    margin-top: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 28px 32px;
+  }
+  .err-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .err-item {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 600px) { .err-item { grid-template-columns: 1fr; gap: 8px; } }
+  .err-num {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .err-content { display: flex; flex-direction: column; gap: 10px; }
+  .err-msg {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: white;
+    background: var(--ink);
+    padding: 10px 14px;
+    border-radius: 4px;
+    line-height: 1.5;
+    border-left: 3px solid var(--accent);
+    overflow-x: auto;
+  }
+  .err-msg .err-prefix { color: var(--accent); font-weight: 600; margin-right: 8px; }
+  .err-msg .err-quote { color: #ffd6c8; }
+  .err-msg .err-path { color: #8ec5ff; }
+  .err-q {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.4;
+  }
+  .err-q .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; color: var(--accent); font-weight: 500; }
+  .err-a {
+    color: var(--ink-soft);
+    font-size: 14px;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .err-a strong { color: var(--ink); font-weight: 600; }
+  .err-a code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: var(--bg-2);
+    color: var(--ink);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  .err-fix {
+    background: var(--green-soft);
+    border-left: 3px solid var(--green);
+    padding: 10px 14px;
+    border-radius: 0 4px 4px 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .err-fix .ef-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-right: 8px;
+    font-weight: 700;
+  }
+  .err-fix code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: rgba(255,255,255,0.6);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+
+  /* ============= §06 cheatsheet ============= */
+  .cheat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 24px;
+  }
+  @media (max-width: 880px) { .cheat-grid { grid-template-columns: 1fr; } }
+  .cheat-block {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 24px 26px;
+  }
+  .cheat-block h3 {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    margin: 0 0 14px;
+    letter-spacing: -0.01em;
+  }
+  .cheat-block h3 .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; color: var(--accent); font-weight: 500; }
+  .cheat-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .cheat-table th, .cheat-table td {
+    text-align: left;
+    padding: 9px 10px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .cheat-table tr:last-child td { border-bottom: none; }
+  .cheat-table th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .cheat-table .term {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .cheat-table .desc { color: var(--ink-soft); line-height: 1.5; }
+  .cheat-table .desc strong { color: var(--ink); font-weight: 600; }
+  .cheat-table .desc code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: var(--bg-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+  .cheat-block .cheat-foot {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--ink-mute);
+    border-top: 1px dashed var(--line);
+    padding-top: 12px;
+    line-height: 1.55;
+  }
+  .cheat-block .cheat-foot code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    background: var(--bg-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* 三步法则卡 */
+  .rule-block {
+    margin-top: 18px;
+    background: var(--ink);
+    color: white;
+    border-radius: 8px;
+    padding: 28px 32px;
+    overflow: hidden;
+    position: relative;
+  }
+  .rule-block::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 0% 100%, rgba(255,77,46,0.12), transparent 55%);
+    pointer-events: none;
+  }
+  .rule-block h3 {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 24px;
+    margin: 0 0 6px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: white;
+  }
+  .rule-block h3 .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; color: var(--accent); font-weight: 500; }
+  .rule-block .rule-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+  .rule-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    position: relative;
+  }
+  @media (max-width: 720px) { .rule-steps { grid-template-columns: 1fr; } }
+  .rule-step {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    padding: 18px 20px;
+    position: relative;
+  }
+  .rule-step .rs-num {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 36px;
+    color: var(--accent);
+    line-height: 1;
+    font-weight: 800;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .rule-step .rs-q {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 8px;
+    line-height: 1.3;
+  }
+  .rule-step .rs-a {
+    font-size: 13px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.55;
+    margin: 0;
+  }
+  .rule-step .rs-a code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    background: rgba(255,255,255,0.08);
+    color: white;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* ============= Unified next-post block ============= */
+  .next-post {
+    margin-top: 48px;
+    padding: 32px 36px;
+    background: var(--ink);
+    color: var(--bg);
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: center;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .next-post::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 100% 0%, rgba(255,77,46,0.12), transparent 55%);
+    pointer-events: none;
+  }
+  .next-post:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(22,22,29,0.22); }
+  @media (max-width: 720px) { .next-post { grid-template-columns: 1fr; padding: 24px; gap: 20px; } }
+  .next-post .np-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+  .next-post h4 {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 26px;
+    margin: 0 0 10px;
+    font-weight: 700;
+    color: white;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .next-post h4 .em {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .next-post p {
+    margin: 0;
+    color: rgba(255,255,255,0.72);
+    font-size: 14px;
+    line-height: 1.65;
+    max-width: 560px;
+  }
+  .next-post p strong { color: white; font-weight: 600; }
+  .next-post p code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: rgba(255,255,255,0.1);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: white;
+  }
+  .next-post .np-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 24px;
+    background: var(--accent);
+    color: white;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    transition: background 0.18s, color 0.18s, transform 0.18s;
+    position: relative;
+    z-index: 1;
+  }
+  .next-post:hover .np-cta { background: white; color: var(--ink); transform: translateX(2px); }
+  .next-post .np-cta .arr { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif; font-style: italic; font-size: 18px; font-weight: 500; }
+
+  /* footer */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 56px 0 64px;
+    background: var(--bg);
+  }
+  .byline-wrap { position: relative; }
+  .byline {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    padding-bottom: 32px;
+    border-bottom: 1px dashed var(--line);
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .byline::before {
+    content: '';
+    position: absolute;
+    top: -56px; left: 0;
+    width: 32px; height: 1px;
+    background: var(--accent);
+  }
+  .byline .avatar {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 3px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--line), 0 6px 20px rgba(22,22,29,0.10);
+    background: var(--paper);
+  }
+  .byline-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.18em;
+    margin-bottom: 8px;
+  }
+  .byline-label .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: 1px;
+  }
+  .byline-name {
+    font-family: 'Noto Serif SC', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+  }
+  .byline-name .em {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .byline-tag {
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    margin: 0;
+    max-width: 52ch;
+  }
+  .byline-contact { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; }
+  .byline-contact .contact-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); padding: 2px 8px; border: 1px solid var(--line); border-radius: 3px; }
+  .byline-contact .contact-id { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--ink); background: var(--accent-soft); padding: 3px 10px; border-radius: 4px; letter-spacing: 0.02em; }
+  .byline-contact .contact-hint { font-size: 12px; color: var(--ink-soft); }
+  .footer-meta {
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-mute);
+    letter-spacing: 0.05em;
+  }
+  .footer-meta .heart { color: var(--accent); }
+  .footer-meta .mono { color: var(--ink-soft); font-weight: 500; }
+  @media (max-width: 600px) {
+    .byline { flex-direction: column; text-align: center; align-items: center; gap: 16px; }
+    .byline-tag { margin-left: auto; margin-right: auto; }
+  }
+
+  /* === Roadmap Modal === */
+  .rm-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 30px 16px; }
+  .rm-modal[hidden] { display: none; }
+  .rm-backdrop { position: absolute; inset: 0; background: rgba(22,22,29,0.55); backdrop-filter: blur(4px); animation: rm-fade 0.2s; }
+  @keyframes rm-fade { from { opacity: 0; } to { opacity: 1; } }
+  .rm-dialog { position: relative; background: var(--bg); border-radius: 12px; max-width: 720px; width: 100%; max-height: calc(100vh - 60px); overflow-y: auto; padding: 32px 36px 24px; box-shadow: 0 30px 80px rgba(0,0,0,0.3); animation: rm-pop 0.25s cubic-bezier(0.4,0,0.2,1); }
+  @keyframes rm-pop { from { transform: scale(0.96) translateY(8px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+  .rm-close { position: absolute; top: 14px; right: 16px; background: transparent; border: none; cursor: pointer; font-size: 20px; color: var(--ink-mute); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.15s; line-height: 1; }
+  .rm-close:hover { background: var(--bg-2); color: var(--ink); }
+  .rm-header { margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px dashed var(--line); }
+  .rm-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
+  .rm-title { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-size: 28px; margin: 0 0 6px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.1; }
+  .rm-title .rm-em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; color: var(--accent); font-weight: 500; }
+  .rm-sub { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-mute); margin: 0; }
+  .rm-body { display: flex; flex-direction: column; gap: 18px; }
+  .rm-mod-key { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink); font-weight: 700; margin-bottom: 8px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .rm-mod-list { display: flex; flex-direction: column; gap: 6px; }
+  .rm-cell { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; padding: 9px 13px; border-radius: 5px; background: var(--paper); border: 1px solid var(--line); text-decoration: none; color: inherit; transition: all 0.15s; }
+  .rm-cell:hover { border-color: var(--accent); background: var(--accent-soft); transform: translateX(3px); }
+  .rm-cell.rm-cell-current { border-color: var(--accent); background: var(--accent-soft); }
+  .rm-cell-code { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif; font-style: italic; font-weight: 500; color: var(--accent); font-size: 15px; }
+  .rm-cell-name { font-size: 13px; color: var(--ink); }
+  .rm-cell-tier { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.08em; color: var(--ink-mute); text-transform: uppercase; border: 1px solid var(--line); padding: 2px 7px; border-radius: 3px; }
+  .rm-cell-tier.rm-tier-current { background: var(--accent); color: white; border-color: var(--accent); }
+  .rm-footer { margin-top: 22px; padding-top: 16px; border-top: 1px dashed var(--line); display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink-soft); flex-wrap: wrap; gap: 8px; }
+  .rm-wechat { font-family: 'JetBrains Mono', monospace; background: var(--accent-soft); color: var(--ink); padding: 3px 10px; border-radius: 3px; font-weight: 600; letter-spacing: 0.02em; }
+  .nav-links a[data-rm-open] { cursor: pointer; }
+
+  /* === footer byline === */
+  .byline-group, .byline-wrap.byline-group { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+  .byline-group .byline { display: flex; gap: 16px; align-items: flex-start; margin: 0; min-width: 0; }
+  .byline-group .avatar { width: 56px; height: 56px; flex-shrink: 0; }
+  .byline-group .byline-meta { min-width: 0; }
+  .byline-group .byline-name { font-size: 18px; }
+  .byline-group .byline-tag { font-size: 12px; line-height: 1.55; }
+  .byline-group .byline-contact { margin-top: 10px; padding-top: 10px; display: flex; align-items: flex-start; gap: 10px; flex-wrap: nowrap; }
+  .byline-group .byline-contact .contact-label { padding: 1px 6px; font-size: 10px; align-self: flex-start; }
+  .byline-group .byline-contact .contact-id { padding: 2px 8px; font-size: 12px; align-self: flex-start; }
+  .byline-group .byline-contact .contact-hint { font-size: 11px; line-height: 1.5; }
+  .byline-contact-text { display: flex; flex-direction: column; gap: 5px; min-width: 0; flex: 1; padding-top: 1px; }
+  .byline-contact .qr-card { width: 68px; height: 68px; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; flex-shrink: 0; position: relative; background: #fff; }
+  .byline-contact .qr-card.qr-empty { border-style: dashed; background: var(--accent-soft); }
+  .byline-contact .qr-card.qr-empty::after { content: "二维码\A 待补充"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; white-space: pre-line; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--ink-mute); letter-spacing: 0.05em; line-height: 1.5; }
+  .byline-contact .qr-card img { width: 100%; height: 100%; display: block; object-fit: cover; }
+  @media (max-width: 700px) {
+    .byline-group, .byline-wrap.byline-group { grid-template-columns: 1fr; gap: 18px; }
+    .byline-group .byline + .byline { padding-top: 18px; border-top: 1px dashed var(--line); }
+  }
+
+  
+  /* lesbian-flag-5color-band — topbar 底部 2px 5 色细 band */
+  .topbar {
+    background-image: linear-gradient(to right, #D52D00 0 14.28%, #EF7627 14.28% 28.57%, #FF9A56 28.57% 42.86%, #FFFFFF 42.86% 57.14%, #D162A4 57.14% 71.43%, #B55690 71.43% 85.71%, #EF7627 85.71% 100%) !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 2px !important;
+    background-position: bottom !important;
+  }
+
+/* === portfolio-inspired 入场 + hover 动效(米色基调统一)=== */
+@keyframes p-fade-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes p-fade-down { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes p-scale-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+
+.topbar { animation: p-fade-down 0.7s cubic-bezier(0.16,1,0.3,1) backwards; }
+.hero, header.hero { animation: p-fade-up 0.85s cubic-bezier(0.16,1,0.3,1) 0.15s backwards; }
+.section-head { animation: p-fade-up 0.8s cubic-bezier(0.16,1,0.3,1) backwards; }
+
+.rm-cell, .next-post, .j-node, .vol-tab, .hero-film-card, .nav-links a,
+.track-tab, .ld, .jp-filter, .hero-cinema-link {
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s ease-out, color 0.2s, background-color 0.2s;
+}
+.rm-cell:hover, .next-post:hover, .hero-film-card:hover, .vol-tab:hover {
+  transform: translateY(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar, .hero, .section-head { animation: none !important; }
+  .rm-cell, .next-post, .j-node, .vol-tab, .hero-film-card,
+  .nav-links a, .track-tab, .ld, .jp-filter, .hero-cinema-link {
+    transition: none !important;
+  }
+  .rm-cell:hover, .next-post:hover, .hero-film-card:hover, .vol-tab:hover {
+    transform: none !important;
+  }
+}
+
+  /* 字体分工:正文=阿里普惠体, 标题=阿里妈妈数黑体 */
+  html, body, p, span, div, a, button, input, textarea, select, label, li, td, th,
+  .lede, .desc, .section-sub, .hi-desc, .nav-links, .demo-label, .brand, .tier {
+    font-family: 'Alibaba PuHuiTi 3.0', '阿里巴巴普惠体 3.0', '阿里巴巴普惠体',
+                 system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif !important;
+  }
+  h1, h2, h3, h4, .display-en, .display-cn, .hi-title, .hc-title,
+  .section-title, .sc-mid, .si-title, .pv-title, .tv-title, .k-title,
+  .ch-title, .season-title, .ep-title, .nb-h,
+  [class*="-title"], [class$="-title"] {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', sans-serif !important;
+    font-style: normal !important;
+    font-weight: 700 !important;
+  }
+
+  /* footer 紧凑 + 白底 */
+  footer {
+    background: #ffffff !important;
+    padding: 32px 0 !important;
+    border-top: 1px solid #e4e4e7 !important;
+  }
+  footer .wrap { padding: 0 32px !important; }
+  footer .byline { gap: 14px !important; align-items: center !important; }
+  footer .avatar { width: 56px !important; height: 56px !important; }
+  footer .byline-name { font-size: 18px !important; margin: 4px 0 !important; line-height: 1.3 !important; }
+  footer .byline-tag { font-size: 13px !important; margin: 2px 0 0 !important; line-height: 1.4 !important; }
+  footer .byline-label { font-size: 10px !important; letter-spacing: 0.14em !important; }
+  footer .footer-meta { font-size: 11px !important; margin-top: 18px !important; padding-top: 18px !important; }
+
+  /* .em 和 .display-cn 用数黑 + 橙色 */
+  .em, .display-cn {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', sans-serif !important;
+    color: #EF7627 !important;
+  }
+
+  /* manifesto 文字填满 */
+  .manifesto p { max-width: 100% !important; }
+
+  /* roadmap 居中 + 缩小底部间距 */
+  .journey-svg {
+    transform-origin: 50% 0% !important;
+  }
+  section#roadmap, #roadmap {
+    padding-bottom: 24px !important;
+  }
+  .vol-panel { padding-bottom: 0 !important; margin-bottom: 0 !important; }
+
+  /* 子页清掉冗余引导文案 */
+  .lede, .section-sub { display: none !important; }
+
+  /* footer 文案统一左对齐 */
+  footer .footer-meta, .footer-meta {
+    text-align: left !important;
+    justify-content: flex-start !important;
+  }
+
+  /* 内页 hero 标题用黑色,不要橙色 */
+  header.hero h1 .em,
+  header.hero h1 .display-cn,
+  header.hero h1 .display-en,
+  header.hero h1 .x {
+    color: var(--ink, #0a0a0a) !important;
+  }
+
+  /* signature 渐变 · 7 色个人标识 */
+  :root {
+    --sig-grad: linear-gradient(90deg,
+      #D52D00 0%, #EF7627 18%, #FF9A56 33%,
+      #FFFFFF 50%,
+      #D162A4 67%, #B55690 82%, #A30262 100%);
+  }
+  /* 1. 站标 ● 改渐变签名球 */
+  .brand .dot {
+    background: var(--sig-grad) !important;
+    width: 10px !important;
+    height: 10px !important;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.04) !important;
+  }
+  /* 3. 顶部阅读进度条 · scroll-driven */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--sig-grad);
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    z-index: 9999;
+    pointer-events: none;
+    animation: sig-progress linear;
+    animation-timeline: scroll(root);
+  }
+  @keyframes sig-progress { to { transform: scaleX(1); } }
+  /* Safari fallback:不支持 scroll-timeline 时藏起来,不残留 */
+  @supports not (animation-timeline: scroll()) {
+    body::before { display: none; }
+  }
+
+  /* 去掉 topbar 底部 5 色 band(改用顶部进度条) */
+  .topbar {
+    background-image: none !important;
+  }
+
+  /* 已读环 + 进度条用 signature 渐变 */
+  .j-node.read .j-node-circle {
+    stroke: url(#sig-grad-svg) !important;
+    stroke-width: 2.5 !important;
+  }
+  .book-progress-fill {
+    background: var(--sig-grad) !important;
+  }
+
+  /* footer 右下角微信二维码 */
+  footer .wrap {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-rows: auto auto !important;
+    column-gap: 32px !important;
+    row-gap: 16px !important;
+    align-items: end !important;
+  }
+  footer .byline-group { grid-column: 1; grid-row: 1; }
+  footer .footer-meta { grid-column: 1; grid-row: 2; }
+  footer .footer-wechat {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    align-self: center;
+  }
+  .footer-wechat .wechat-qr {
+    width: 92px;
+    height: 92px;
+    border-radius: 6px;
+    border: 1px solid var(--line, #e4e4e7);
+    background: #fff;
+    display: block;
+  }
+  .footer-wechat .wechat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: var(--ink-mute, #6b6b75);
+    font-weight: 700;
+    text-align: center;
+  }
+  .footer-wechat .wechat-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink, #0a0a0a);
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  /* topbar 中间课程 CTA */
+  .course-cta {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 6px 14px !important;
+    border: 1px solid var(--line, #e4e4e7) !important;
+    border-radius: 100px !important;
+    font-family: 'Alibaba PuHuiTi 3.0', 'PingFang SC', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: var(--ink, #0a0a0a) !important;
+    text-decoration: none !important;
+    background: #fff !important;
+    transition: all 0.2s ease !important;
+    letter-spacing: 0.02em !important;
+    white-space: nowrap !important;
+  }
+  .course-cta:hover {
+    border-color: var(--accent, #EF7627) !important;
+    color: var(--accent, #EF7627) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(239,118,39,0.12) !important;
+  }
+  .course-cta .cta-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--sig-grad, #EF7627);
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .course-cta .cta-arrow {
+    font-size: 11px;
+    opacity: 0.55;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  .course-cta:hover .cta-arrow {
+    transform: translate(2px, -2px);
+    opacity: 1;
+  }
+  @media (max-width: 760px) {
+    .course-cta { font-size: 11px !important; padding: 5px 10px !important; }
+    .course-cta .cta-text { display: none; }
+  }
+
+  /* 去掉右上角 HOME tab(只一个 tab,没用) */
+  nav.vol-tabs { display: none !important; }
+
+  /* 修 .wf-btn.primary hover 被错误覆盖背景的问题 */
+  .wf-btn.primary:hover:not(:disabled) {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-color: var(--accent) !important;
+    filter: brightness(0.92);
+  }
+
+  /* 隐藏入口与路线图 */
+  #tracks, .track-switch, #x_alt-roadmap { display: none !important; }
+
+  /* 主页 manifesto → roadmap 之间补回视觉间隔 */
+  #roadmap {
+    position: relative;
+    margin-top: 56px !important;
+    padding-top: 88px !important;
+  }
+  #roadmap::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 1px;
+    background: var(--sig-grad, #EF7627);
+    opacity: 0.7;
+  }
+
+  /* footer 内的 REFERENCES 引用块隐藏(全站 footer 一致) */
+  footer .label, footer .source-list { display: none !important; }
+
+  /* topbar 三栏严格对齐:brand 左 / CTA 中 / nav 右 */
+  .topbar-inner {
+    display: grid !important;
+    grid-template-columns: 1fr auto 1fr !important;
+    align-items: center !important;
+    gap: 16px !important;
+  }
+  .topbar-inner .brand,
+  .topbar-inner .brand-block { justify-self: start; }
+  .topbar-inner .course-cta { justify-self: center; }
+  .topbar-inner .nav-links,
+  .topbar-inner nav.nav-links,
+  .topbar-inner nav.vol-tabs { justify-self: end; }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand-block"><a href="index.html#vol-3" class="brand"><span class="brand-arrow">←</span><span class="dot"></span>AI LABBOOK</a><span class="brand-sep">/</span><span class="brand-current">F2 · Import / 工程入门</span></div>
+    <a class="course-cta" href="https://xhslink.com/m/92BZZ1bF3xv" target="_blank" rel="noopener">
+      <span class="cta-dot"></span>
+      <span class="cta-text">给设计师的零基础 AI 课</span>
+      <span class="cta-arrow">↗</span>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html#vol-3" data-rm-open>路线图</a>
+    </nav>
+  </div>
+</div>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-meta">
+      <span class="pill fill">实验互动 · INTERACTIVE</span>
+      <span class="pill">2026 · 设计 × 代码</span>
+      <span class="pill">F2 · 入门 · 工程</span>
+      <span class="label">阅读时长 ≈ 6 分钟</span>
+    </div>
+    <div class="hero-grid">
+      <div>
+        <h1>
+          <span class="display-cn">代码开头那堆</span><br>
+          <span class="em">import</span><span class="display-cn">，</span><br>
+          <span class="display-cn">在说什么？</span>
+        </h1>
+        <p class="lede">
+          打开 AI 写的代码，最上面永远是一堆 import。<br>
+          它们不是天书 —— 每行只是在说："这个文件，要用到别处的某样东西"。<br>
+          这一篇带你<span class="em">看懂</span>它们，不用自己会写。
+        </p>
+      </div>
+      <div class="hero-side">
+        <div class="row"><span class="k">本页讲什么</span><span class="v">看懂开头的 import</span></div>
+        <div class="row"><span class="k">含互动</span><span class="v">办公楼地图 · 可点</span></div>
+        <div class="row"><span class="k">面向</span><span class="v">设计师 · 零基础</span></div>
+        <div class="row"><span class="k">带走一句</span><span class="v">import = 谁用到了谁</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- §01 文件就是同事座位 -->
+<section id="office">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>01</strong> / 心智模型</div>
+        <h2 class="section-title">文件，就是<br>楼里<span class="em">一个个房间</span>。</h2>
+      </div>
+      <p class="section-sub">
+        把整个项目想成一栋办公楼：每个文件夹是一层楼，每个文件是一个房间。
+        <strong>import，就是一个房间说"我要用到另一个房间里的东西"。</strong>
+      </p>
+    </div>
+
+    <div class="hint-strip">
+      <span class="hint-tag">点点看</span>
+      点这栋楼的任意楼层或房间 —— 右边会告诉你它住的是什么、平时要用到楼里的谁。
+    </div>
+
+    <div class="office-stage" id="officeStage">
+      <div class="office-grid">
+        <!-- Left: building -->
+        <div class="office-canvas">
+          <div class="office-building">
+            <div class="office-roof">
+              <span><span class="roof-tag">●</span> my-project /</span>
+              <span class="roof-rt">PROJECT ROOT</span>
+            </div>
+
+            <div class="office-floor" data-key="pages">
+              <div class="office-floor-head">
+                <span class="office-floor-name"><span class="of-icon"></span>src/pages/</span>
+                <span class="office-floor-num">3F · 页面层</span>
+              </div>
+              <div class="office-desks">
+                <span class="office-desk" data-key="page-home">Home.tsx</span>
+                <span class="office-desk" data-key="page-about">About.tsx</span>
+                <span class="office-desk" data-key="page-blog">Blog.tsx</span>
+              </div>
+            </div>
+
+            <div class="office-floor" data-key="components">
+              <div class="office-floor-head">
+                <span class="office-floor-name"><span class="of-icon"></span>src/components/</span>
+                <span class="office-floor-num">2F · 组件层</span>
+              </div>
+              <div class="office-desks">
+                <span class="office-desk" data-key="comp-button">Button.tsx</span>
+                <span class="office-desk" data-key="comp-card">Card.tsx</span>
+                <span class="office-desk" data-key="comp-nav">Nav.tsx</span>
+              </div>
+            </div>
+
+            <div class="office-floor" data-key="lib">
+              <div class="office-floor-head">
+                <span class="office-floor-name"><span class="of-icon"></span>src/lib/</span>
+                <span class="office-floor-num">1F · 工具层</span>
+              </div>
+              <div class="office-desks">
+                <span class="office-desk" data-key="lib-theme">theme.ts</span>
+                <span class="office-desk" data-key="lib-utils">utils.ts</span>
+              </div>
+            </div>
+
+            <div class="office-floor" data-key="root">
+              <div class="office-floor-head">
+                <span class="office-floor-name"><span class="of-icon" style="background:var(--ink-mute);"></span>./</span>
+                <span class="office-floor-num">G · 大堂 / 项目根</span>
+              </div>
+              <div class="office-desks">
+                <span class="office-desk" data-key="root-pkg">package.json</span>
+                <span class="office-desk" data-key="root-tsc">tsconfig.json</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right: info card -->
+        <div class="office-info">
+          <div class="office-info-tag" id="oiTag">↑ 点一个楼层 / 房间</div>
+          <h3 class="office-info-name" id="oiName"><span class="pin">3F</span>页面层 · pages/</h3>
+          <p class="office-info-desc" id="oiDesc">用户能看到的"屏幕"住在这层。每个文件就是一个完整页面 —— 首页、关于页、博客页。</p>
+          <div class="office-info-section">
+            <div class="office-info-label">在哪一层</div>
+            <p class="office-info-meta" id="oiAddr"><strong>3F</strong> · 页面层，整栋楼最上面。</p>
+          </div>
+          <div class="office-info-section">
+            <div class="office-info-label">它会用到楼里的谁</div>
+            <p class="office-info-meta" id="oiCall">页面要用到 <strong>组件</strong>（楼下 2F）和 <strong>工具</strong>（楼下 1F）—— 代码里就写成 import。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quote-box">
+      <span class="quote-mark">"</span>
+      所以一行 import，<strong>左边是"要用谁"，右边是"上哪找它"</strong>。
+      你<span class="em">不用会写</span>，看懂它在讲哪两个文件，就够了。
+      <span class="quote-attr">—— 这一篇只教看懂，不教你数路径</span>
+    </div>
+  </div>
+</section>
+
+<!-- §02 三种路径 -->
+<section id="three-paths">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>02</strong> / 三种路径</div>
+        <h2 class="section-title">三种开头，<br><span class="em">一眼认出</span>。</h2>
+      </div>
+      <p class="section-sub">
+        import 后面那串，开头无非这三种。
+        认得它们，再看 AI 写的代码，就知道每行在指项目里的哪个文件。
+      </p>
+    </div>
+
+    <div class="paths-grid">
+      <!-- ./ same folder -->
+      <div class="path-card">
+        <div class="path-head">
+          <span class="path-symbol">./</span>
+          <span class="path-headline">就在同一层</span>
+        </div>
+        <div class="path-body">
+          <h4>同文件夹的<span class="em">邻居</span></h4>
+          <p class="path-1liner">开头一个点 <code>./</code> —— 意思是"<strong>我同一个文件夹里</strong>的那个文件"。最近、最常见。</p>
+          <div class="path-mini">
+            <div class="pm-cell from">Home.tsx<br><span style="color:var(--ink-mute);font-size:9px;">页面层</span></div>
+            <div class="pm-arrow">→</div>
+            <div class="pm-cell to">HeroBanner.tsx<br><span style="color:var(--accent);opacity:.7;font-size:9px;">同一层</span></div>
+          </div>
+          <div class="path-when">
+            <strong>看到它就知道：</strong>这俩文件是邻居，挨着放的。
+          </div>
+        </div>
+      </div>
+
+      <!-- ../ other folder -->
+      <div class="path-card">
+        <div class="path-head">
+          <span class="path-symbol">../</span>
+          <span class="path-headline">要去别的楼层</span>
+        </div>
+        <div class="path-body">
+          <h4><span class="em">不在同一层</span>，去别处找</h4>
+          <p class="path-1liner">开头是两点加斜杠 <code>../</code> —— 意思是"<strong>不在我这层</strong>，得去别的文件夹"。点越多，跨得越远。</p>
+          <div class="path-mini">
+            <div class="pm-cell from">Home.tsx<br><span style="color:var(--ink-mute);font-size:9px;">页面层</span></div>
+            <div class="pm-arrow">↑↓</div>
+            <div class="pm-cell to">Button.tsx<br><span style="color:var(--accent);opacity:.7;font-size:9px;">组件层</span></div>
+          </div>
+          <div class="path-when">
+            <strong>看到它就知道：</strong>这俩不在一块儿，隔着文件夹。
+          </div>
+        </div>
+      </div>
+
+      <!-- @/ alias -->
+      <div class="path-card">
+        <div class="path-head">
+          <span class="path-symbol">@/</span>
+          <span class="path-headline">项目内的简写</span>
+        </div>
+        <div class="path-body">
+          <h4>从<span class="em">项目根</span>直接点名</h4>
+          <p class="path-1liner">开头是 <code>@/</code> —— 项目给自己配的简写，永远从最外层算起。在哪个文件里写都指同一处。</p>
+          <div class="path-mini">
+            <div class="pm-cell from">任意文件<br><span style="color:var(--ink-mute);font-size:9px;">在哪都行</span></div>
+            <div class="pm-arrow">⤳</div>
+            <div class="pm-cell to">@/components/Button<br><span style="color:var(--accent);opacity:.7;font-size:9px;">固定位置</span></div>
+          </div>
+          <div class="path-when">
+            <strong>看到它就知道：</strong>这是项目内部的东西，@ 就代表"本项目"。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint-strip" style="margin-top:24px;background:var(--bg-2);border-left-color:var(--ink);">
+      <span class="hint-tag" style="color:var(--ink);">真正要记的就一句</span>
+      看 import 后面那串的<strong>开头</strong>：<code>.</code> 或 <code>@</code> 开头 = <strong>项目里自己写的文件</strong>；
+      直接是字母（像 <code>react</code>）= <strong>装进来的现成零件</strong>。这一句就够看懂八成 import。
+    </div>
+  </div>
+</section>
+
+<!-- §03 路径迷宫 -->
+<section id="maze">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>03</strong> / 核心小游戏</div>
+        <h2 class="section-title">路径迷宫<br>—— <span class="em">5 关</span>。</h2>
+      </div>
+      <p class="section-sub">
+        左边是真实的项目文件树。每一关给你<strong>起点</strong>（你在哪个文件）和<strong>目标</strong>（要 import 哪个）。
+        从 4 个候选路径里挑对的一个 —— 选错有反馈。
+      </p>
+    </div>
+
+    <div class="hint-strip">
+      <span class="hint-tag">玩法</span>
+      仔细看左边树里的 <strong>YOU</strong>（你在哪）和 <strong>TARGET</strong>（要 import 谁）。然后选下面四条路径里的对的那条。
+    </div>
+
+    <div class="maze-stage" id="mazeStage">
+      <div class="maze-grid">
+
+        <!-- Left: file tree -->
+        <div class="maze-tree-wrap">
+          <div>
+            <div class="maze-tree-tag">PROJECT TREE · 真实文件树</div>
+            <h3 class="maze-tree-title">my-project /</h3>
+          </div>
+          <div class="maze-tree" id="mazeTree">
+            <!-- rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Right: round panel -->
+        <div class="maze-panel">
+
+          <div class="maze-progress">
+            <div class="maze-progress-track" id="mazeProgress">
+              <span class="mpt-dot is-current"></span>
+              <span class="mpt-dot"></span>
+              <span class="mpt-dot"></span>
+              <span class="mpt-dot"></span>
+              <span class="mpt-dot"></span>
+            </div>
+            <div class="maze-progress-meta">第 <strong id="mazeRound">1</strong> / 5 关</div>
+            <div class="maze-score">SCORE · <strong id="mazeScore">0</strong> / 5</div>
+          </div>
+
+          <div class="maze-task" id="mazeTask">
+            <div class="maze-task-tag" id="mazeTaskTag">ROUND 01 · 同部门</div>
+            <h3 class="maze-task-q" id="mazeTaskQ">
+              你在 <span class="em">Home.tsx</span>，要 import <span class="em">HeroBanner.tsx</span>。
+            </h3>
+            <div class="maze-task-route">
+              <div class="mtr-cell from" id="mazeFromCell">
+                Home.tsx
+                <span class="mtr-sub" id="mazeFromSub">3F · pages</span>
+              </div>
+              <div class="mtr-arrow">→</div>
+              <div class="mtr-cell to" id="mazeToCell">
+                HeroBanner.tsx
+                <span class="mtr-sub" id="mazeToSub">3F · pages</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="maze-options" id="mazeOpts">
+            <!-- rendered by JS -->
+          </div>
+
+          <div class="maze-feedback" id="mazeFeedback">
+            <span class="mf-tag">提示 · HINT</span>
+            点 4 条路径里你觉得对的那条 —— 选错给反馈，选对就过关。
+          </div>
+
+          <div class="maze-controls">
+            <button class="maze-btn maze-btn-ghost" id="mazeRestart">↻ 从第一关</button>
+            <button class="maze-btn" id="mazeNext" disabled>下一关 →</button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <div class="quote-box" style="margin-top:32px;">
+      <span class="quote-mark">"</span>
+      路径错的<span class="em">90%</span> 都是同一种错：算 <code style="font-family:'JetBrains Mono',monospace;font-size:0.86em;background:var(--bg-2);padding:1px 5px;border-radius:3px;">../</code> 数错了 —— 多了或少了一层。
+      AI 偶尔也会数错。<strong>不要尽信，亲自走一遍这个路径</strong>。
+      <span class="quote-attr">—— 数 ../ 的时候手指头真的可以点屏幕</span>
+    </div>
+  </div>
+</section>
+
+<!-- §04 alias config -->
+<section id="alias">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>04</strong> / @/ 别名</div>
+        <h2 class="section-title">@/ 就是<br><span class="em">"本项目"</span>。</h2>
+      </div>
+      <p class="section-sub">
+        看到 <code>@/</code> 开头别慌 —— 它只是"项目根"的简写。
+        这一节让你看懂它，不用会配。
+      </p>
+    </div>
+
+    <div class="alias-stage">
+      <div class="alias-grid">
+        <!-- left: @/ → 项目里的对照 -->
+        <div class="alias-pane is-config">
+          <div class="alias-pane-head">
+            <span><span class="apt">●</span> @/ 心里这样翻译</span>
+            <span>看到就懂</span>
+          </div>
+          <div class="alias-pane-body">
+            <div class="alias-translate">
+              <div class="at-row">
+                <div class="at-cell from">@/components/Button</div>
+                <div class="at-arrow">⤳</div>
+                <div class="at-cell to">项目里的 Button</div>
+              </div>
+              <div class="at-row">
+                <div class="at-cell from">@/lib/theme</div>
+                <div class="at-arrow">⤳</div>
+                <div class="at-cell to">项目里的 theme</div>
+              </div>
+              <div class="at-row">
+                <div class="at-cell from">@/pages/Home</div>
+                <div class="at-arrow">⤳</div>
+                <div class="at-cell to">项目里的 Home</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- right: explain -->
+        <div class="alias-explain">
+          <h4><code>@/</code> 就是<span class="em">"本项目"</span>的简写</h4>
+          <p>
+            文件嵌得深的时候，路径会写成 <code>../../../</code> 一长串，又丑又容易错。
+            于是项目给自己配了个简写：<strong><code>@/</code> 永远代表项目根</strong>，在哪个文件里写都一样。
+          </p>
+          <p>
+            所以看到 <code>@/components/Button</code>，心里翻译成"<strong>项目里那个 Button</strong>"就对了 ——
+            不用管它具体在第几层文件夹。
+          </p>
+
+          <div class="alias-warn">
+            <span class="aw-tag">偶尔会坑</span>
+            AI 有时会写 <code>@/</code>，但这个项目<strong>没配</strong>这个简写 —— 于是跑不起来。遇到了，把报错丢给 AI 或前端，一句话的事。
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="hint-strip" style="margin-top:24px;">
+      <span class="hint-tag">一句话</span>
+      <code>@/</code>、<code>./</code>、<code>../</code> 开头的，都是<strong>项目自己的文件</strong> —— 只是"在哪找"的写法不同。看懂这点，import 就不再是天书。
+    </div>
+  </div>
+</section>
+
+<!-- §05 import errors -->
+<section id="errors">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>05</strong> / 三种报错</div>
+        <h2 class="section-title">红屏了，<br>先<span class="em">别慌</span>。</h2>
+      </div>
+      <p class="section-sub">
+        import 出错，几乎都是同一件事："它要用的那个文件，没在它以为的地方。"
+        下面三种红字最常见 —— 看懂它在说啥就行，怎么修后面说。
+      </p>
+    </div>
+
+    <div class="err-stage">
+      <ul class="err-list">
+
+        <li class="err-item">
+          <div class="err-num">01</div>
+          <div class="err-content">
+            <div class="err-msg">
+              <span class="err-prefix">Error:</span>
+              Cannot find module <span class="err-quote">'@/components/Button'</span>
+            </div>
+            <h3 class="err-q">"<span class="em">Cannot find module</span>" —— 找不到那个文件</h3>
+            <p class="err-a">
+              人话："我按这个名字找过去，<strong>那儿没有</strong>。"
+              常见就三种：名字打错了、文件还没建、或者大小写不对。
+            </p>
+            <div class="err-fix">
+              <span class="ef-tag">怎么办</span>
+              <strong>最快</strong>：把这行红字整段复制，发给 AI 或前端 —— 他们一眼就知道哪错了。想自己看：把引号里的文件名，和项目里真实的文件名一个字一个字对一遍。
+            </div>
+          </div>
+        </li>
+
+        <li class="err-item">
+          <div class="err-num">02</div>
+          <div class="err-content">
+            <div class="err-msg">
+              <span class="err-prefix">Error:</span>
+              Module not found: Can't resolve <span class="err-quote">'../lib/theme'</span>
+            </div>
+            <h3 class="err-q">"<span class="em">Can't resolve</span>" —— 同一个意思，换个说法</h3>
+            <p class="err-a">
+              这是打包工具自己的措辞，含义和上面<strong>一模一样</strong>：那个文件没找到。
+              别被不同说法吓到，是同一件事。
+            </p>
+            <div class="err-fix">
+              <span class="ef-tag">怎么办</span>
+              处理方式也一样 —— 红字整段复制给 AI / 前端最快。这类"找不到文件"的错，自己硬看容易看花眼。
+            </div>
+          </div>
+        </li>
+
+        <li class="err-item">
+          <div class="err-num">03</div>
+          <div class="err-content">
+            <div class="err-msg">
+              <span class="err-prefix">Error:</span>
+              Cannot find module <span class="err-quote">'./button'</span>. <span style="color:#ffce8a;">Did you mean './Button'?</span>
+            </div>
+            <h3 class="err-q">"<span class="em">Did you mean…?</span>" —— 大小写差一点</h3>
+            <p class="err-a">
+              最贴心的一种：系统已经<strong>猜到</strong>你要哪个了，只是你写的和真名差一点点 ——
+              最常见是大小写（<code>Button</code> 写成了 <code>button</code>）。
+            </p>
+            <div class="err-fix">
+              <span class="ef-tag">怎么办</span>
+              照它 "Did you mean" 后面那个，原样改回去就行。<strong>这种一定要修</strong> —— 你电脑上可能看着正常，换台机器（上线）就崩。
+            </div>
+          </div>
+        </li>
+
+      </ul>
+    </div>
+
+    <div class="hint-strip" style="margin-top:24px;background:var(--bg-2);border-left-color:var(--ink);">
+      <span class="hint-tag" style="color:var(--ink);">只记一条</span>
+      import 报错看不懂？<strong>把那行红字整段复制</strong>，贴给 AI 或前端 —— 比自己猜快十倍。
+    </div>
+  </div>
+</section>
+
+<!-- §06 Cheatsheet -->
+<section id="cheat">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>06</strong> / 速查</div>
+        <h2 class="section-title">截图保存<br>这一<span class="em">页</span>。</h2>
+      </div>
+      <p class="section-sub">
+        看懂 import，记这一页就够。
+        遇到陌生代码翻一眼，不用每次都卡住。
+      </p>
+    </div>
+
+    <!-- 三分钟法则 -->
+    <div class="rule-block">
+      <h3>看 import，<span class="em">问自己三件事</span></h3>
+      <div class="rule-sub">不用会写，看懂就够 · READ, DON'T WRITE</div>
+      <div class="rule-steps">
+        <div class="rule-step">
+          <span class="rs-num">1</span>
+          <h4 class="rs-q">自己的，还是装的？</h4>
+          <p class="rs-a">看开头：<code>.</code> 或 <code>@</code> 开头 = <strong>项目自己写的文件</strong>；直接是字母（<code>react</code>）= <strong>装进来的现成包</strong>。</p>
+        </div>
+        <div class="rule-step">
+          <span class="rs-num">2</span>
+          <h4 class="rs-q">大概在项目哪块？</h4>
+          <p class="rs-a">看路径里的词：<code>components</code> 是组件、<code>lib</code> 是工具、<code>pages</code> 是页面。<strong>认得这几个词，就知道这行在拿什么。</strong></p>
+        </div>
+        <div class="rule-step">
+          <span class="rs-num">3</span>
+          <h4 class="rs-q">还是看不懂？</h4>
+          <p class="rs-a">不纠结。<strong>把那行复制给 AI 或前端</strong>，问"这行在 import 啥" —— 这才是你该花时间的地方。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cheat-grid">
+      <div class="cheat-block">
+        <h3><span class="em">·</span> 符号速查</h3>
+        <table class="cheat-table">
+          <thead>
+            <tr><th>写法</th><th>含义</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="term">. 开头</td>
+              <td class="desc"><code>./</code> <code>../</code> —— <strong>项目自己写的文件</strong>，就在附近的文件夹里。</td>
+            </tr>
+            <tr>
+              <td class="term">@ 开头</td>
+              <td class="desc"><code>@/...</code> —— 也是<strong>项目自己的文件</strong>，只是用了"项目根"的简写。</td>
+            </tr>
+            <tr>
+              <td class="term">字母开头</td>
+              <td class="desc"><code>react</code>、<code>lodash</code> —— <strong>装进来的现成包</strong>（住在 node_modules，F1 讲过）。</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="cheat-foot">
+          一句话：<strong>点 / @ 开头 = 自己的代码；字母开头 = 别人的包</strong>。看懂这个就够。
+        </div>
+      </div>
+
+      <div class="cheat-block">
+        <h3><span class="em">·</span> 这些情况，直接找人 / AI</h3>
+        <table class="cheat-table">
+          <thead>
+            <tr><th>遇到</th><th>怎么办</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="term">红屏报错</td>
+              <td class="desc">复制那行红字，发给 AI 或前端。<strong>别自己硬改路径。</strong></td>
+            </tr>
+            <tr>
+              <td class="term">挪了文件位置</td>
+              <td class="desc">挪动后别处可能就找不到它了。让 AI 帮你"更新所有引用"。</td>
+            </tr>
+            <tr>
+              <td class="term">看不懂某行 import</td>
+              <td class="desc">直接问"这行在拿什么"。看懂意图就好，<strong>语法交给工具</strong>。</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="cheat-foot">
+          你的价值在<strong>判断"对不对"</strong>，不在手敲路径 —— 那是编辑器和 AI 的活。
+        </div>
+      </div>
+    </div>
+
+    <a href="f3-dev-build-figma.html" class="next-post">
+      <div>
+        <div class="np-tag">下一篇 · NEXT · F3</div>
+        <h4>dev / build / preview</h4>
+        <p>继续往下一篇。</p>
+      </div>
+      <span class="np-cta">下一篇 <span class="arr">→</span></span>
+    </a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="byline-wrap byline-group">
+      <div class="byline">
+        <img class="avatar" src="author.jpg" alt="范米花儿">
+        <div class="byline-meta">
+          <div class="byline-label"><span class="dot"></span>作者 · WRITTEN BY</div>
+          <h3 class="byline-name">嗨，我是 <span class="em">范米花儿</span></h3>
+          <p class="byline-tag">设计工程师 ——<br>设计 × 代码，两边都做。</p>
+        </div>
+      </div>
+</div>
+        <div class="footer-wechat">
+      <img class="wechat-qr" src="wechat-qr.png" alt="范米花儿 微信二维码">
+      <div class="wechat-meta">
+        <div class="wechat-label">微信 · WECHAT</div>
+        <div class="wechat-id">vanvan_0422</div>
+      </div>
+    </div>
+    <div class="footer-meta">
+      做于 <span class="mono">2026</span> · 用 <span class="heart">●</span> 写给 <span class="mono">DESIGNERS &amp; DEVELOPERS</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ==========================================================
+//  §01 office floor plan — floor / desk hover & click
+// ==========================================================
+(function () {
+  const stage = document.getElementById('officeStage');
+  if (!stage) return;
+  const floors = stage.querySelectorAll('.office-floor');
+  const desks = stage.querySelectorAll('.office-desk');
+
+  const tagEl  = document.getElementById('oiTag');
+  const nameEl = document.getElementById('oiName');
+  const descEl = document.getElementById('oiDesc');
+  const addrEl = document.getElementById('oiAddr');
+  const callEl = document.getElementById('oiCall');
+
+  const dict = {
+    // floors
+    pages: {
+      tag: 'FLOOR · 3F',
+      pin: '3F',
+      title: '页面层 · pages/',
+      desc: '用户能看到的"屏幕"住在这层。每个文件就是一个完整页面 —— 首页、关于页、博客页。',
+      addr: '<strong>3F</strong> · 页面层，整栋楼最上面。',
+      call: '页面要用到 <strong>组件</strong>（楼下 2F）和 <strong>工具</strong>（楼下 1F）—— 代码里就写成 import。'
+    },
+    components: {
+      tag: 'FLOOR · 2F',
+      pin: '2F',
+      title: '组件层 · components/',
+      desc: '能反复用的"积木"住在这。按钮、卡片、导航栏 —— 每个一个文件，很多页面共用它们。',
+      addr: '<strong>2F</strong> · 组件层，在页面楼下。',
+      call: '组件会用到别的小组件，也会用到工具层。<strong>但一般不反过来用页面</strong> —— 积木不该知道自己被摆在哪。'
+    },
+    lib: {
+      tag: 'FLOOR · 1F',
+      pin: '1F',
+      title: '工具层 · lib/',
+      desc: '不画界面的"幕后工具"住在这。比如存颜色的 theme、一堆小函数的 utils。<strong>纯逻辑，没有界面。</strong>',
+      addr: '<strong>1F</strong> · 工具层，楼最底层。',
+      call: '基本只<strong>被</strong>别人用，自己很少用别人。'
+    },
+    root: {
+      tag: 'FLOOR · G',
+      pin: 'G',
+      title: '大堂 · 项目最外层',
+      desc: '各种设置文件住在这 —— 项目清单、配置。代码开头那些 import 一般不碰这层。',
+      addr: '<strong>大堂</strong> · 整栋楼最外面。',
+      call: '这里的设置决定了 <code>@/</code> 这种简写代表哪一层（见后面 §04）。'
+    },
+    // desks
+    'page-home': {
+      tag: 'ROOM · 3F',
+      pin: 'Home',
+      title: 'Home.tsx',
+      desc: '网站首页。它要用到 HeroBanner、按钮这些 —— 开头就会一行行 import 它们进来。',
+      addr: '页面层的一个房间。',
+      call: '常用到：组件、工具。'
+    },
+    'page-about': {
+      tag: 'ROOM · 3F',
+      pin: 'About',
+      title: 'About.tsx',
+      desc: '关于页。和首页同一层楼，结构差不多。',
+      addr: '页面层的一个房间。',
+      call: '常用到：组件、工具。'
+    },
+    'page-blog': {
+      tag: 'ROOM · 3F',
+      pin: 'Blog',
+      title: 'Blog.tsx',
+      desc: '博客页。也在页面层。想用卡片，就 import 组件层的 Card。',
+      addr: '页面层的一个房间。',
+      call: '常用到：组件、工具。'
+    },
+    'comp-button': {
+      tag: 'ROOM · 2F',
+      pin: 'Button',
+      title: 'Button.tsx',
+      desc: '按钮组件。<strong>很多页面都会用到它</strong>。它自己会用到工具层的 theme（拿颜色）。',
+      addr: '组件层的一个房间。',
+      call: '常用到：工具层、别的小组件。'
+    },
+    'comp-card': {
+      tag: 'ROOM · 2F',
+      pin: 'Card',
+      title: 'Card.tsx',
+      desc: '卡片组件。<strong>组件用组件</strong>很常见 —— 比如卡片里塞个按钮。',
+      addr: '组件层的一个房间。',
+      call: '常用到：同层的别的组件。'
+    },
+    'comp-nav': {
+      tag: 'ROOM · 2F',
+      pin: 'Nav',
+      title: 'Nav.tsx',
+      desc: '导航栏组件。',
+      addr: '组件层的一个房间。',
+      call: '常用到：同层组件 + 工具层。'
+    },
+    'lib-theme': {
+      tag: 'ROOM · 1F',
+      pin: 'theme',
+      title: 'theme.ts',
+      desc: '颜色 / 字号 / 间距这些常量。<strong>到处被用到</strong> —— 视觉系统的"标准答案"住这。',
+      addr: '工具层的一个房间。',
+      call: '基本只被别人用。'
+    },
+    'lib-utils': {
+      tag: 'ROOM · 1F',
+      pin: 'utils',
+      title: 'utils.ts',
+      desc: '一堆小工具函数。比如格式化日期、拼出 className。',
+      addr: '工具层的一个房间。',
+      call: '基本只被别人用。'
+    },
+    'root-pkg': {
+      tag: 'ROOM · 大堂',
+      pin: 'pkg',
+      title: 'package.json',
+      desc: '项目清单 —— 记录装了哪些现成零件。（F1 讲过）',
+      addr: '大堂 · 项目最外层。',
+      call: '不参与代码开头那些 import。'
+    },
+    'root-tsc': {
+      tag: 'ROOM · 大堂',
+      pin: 'tsc',
+      title: 'tsconfig.json',
+      desc: '项目设置。<code>@/</code> 这种简写代表哪一层，就是在这里定的（见 §04）。',
+      addr: '大堂 · 项目最外层。',
+      call: '改这里，才能改 <code>@/</code> 指向哪。'
+    }
+  };
+
+  function setActive(key) {
+    if (!dict[key]) return;
+    floors.forEach(f => f.classList.remove('is-active'));
+    desks.forEach(d => d.classList.remove('is-active'));
+
+    const floor = stage.querySelector('.office-floor[data-key="' + key + '"]');
+    if (floor) floor.classList.add('is-active');
+    const desk = stage.querySelector('.office-desk[data-key="' + key + '"]');
+    if (desk) {
+      desk.classList.add('is-active');
+      // also light the parent floor
+      desk.closest('.office-floor').classList.add('is-active');
+    }
+
+    const d = dict[key];
+    tagEl.textContent = d.tag;
+    nameEl.innerHTML = '<span class="pin">' + d.pin + '</span>' + d.title;
+    descEl.innerHTML = d.desc;
+    addrEl.innerHTML = d.addr;
+    callEl.innerHTML = d.call;
+  }
+
+  floors.forEach(f => {
+    f.addEventListener('mouseenter', () => setActive(f.dataset.key));
+    f.addEventListener('click',      () => setActive(f.dataset.key));
+  });
+  desks.forEach(d => {
+    d.addEventListener('mouseenter', e => { e.stopPropagation(); setActive(d.dataset.key); });
+    d.addEventListener('click',      e => { e.stopPropagation(); setActive(d.dataset.key); });
+  });
+
+  // Default: highlight pages floor
+  setTimeout(() => setActive('pages'), 600);
+})();
+
+// ==========================================================
+//  §03 path maze game — 5 rounds
+// ==========================================================
+(function () {
+  const stage = document.getElementById('mazeStage');
+  if (!stage) return;
+
+  // The shared file tree (rendered once; YOU/TARGET highlight changes per round)
+  // Each entry: { id, name, type, depth, parent }
+  // depth = indentation level for the rendering
+  const tree = [
+    { id: 'src',          name: 'src/',          type: 'folder', depth: 0 },
+    { id: 'pages',        name: 'pages/',        type: 'folder', depth: 1 },
+    { id: 'p-home',       name: 'Home.tsx',      type: 'file',   depth: 2 },
+    { id: 'p-about',      name: 'About.tsx',     type: 'file',   depth: 2 },
+    { id: 'p-blog',       name: 'Blog.tsx',      type: 'file',   depth: 2 },
+    { id: 'pages-admin',  name: 'admin/',        type: 'folder', depth: 2 },
+    { id: 'p-dashboard',  name: 'Dashboard.tsx', type: 'file',   depth: 3 },
+    { id: 'components',   name: 'components/',   type: 'folder', depth: 1 },
+    { id: 'c-button',     name: 'Button.tsx',    type: 'file',   depth: 2 },
+    { id: 'c-card',       name: 'Card.tsx',      type: 'file',   depth: 2 },
+    { id: 'c-nav',        name: 'Nav.tsx',       type: 'file',   depth: 2 },
+    { id: 'lib',          name: 'lib/',          type: 'folder', depth: 1 },
+    { id: 'l-theme',      name: 'theme.ts',      type: 'file',   depth: 2 },
+    { id: 'l-utils',      name: 'utils.ts',      type: 'file',   depth: 2 },
+    { id: 'styles',       name: 'styles/',       type: 'folder', depth: 1 },
+    { id: 's-global',     name: 'global.css',    type: 'file',   depth: 2 }
+  ];
+
+  // 5 rounds, increasing difficulty
+  const rounds = [
+    {
+      tag: 'ROUND 01 · 同部门',
+      from: 'p-home',
+      to: 'p-about',
+      fromLabel: 'Home.tsx',
+      fromSub: 'src/pages/',
+      toLabel: 'About.tsx',
+      toSub: 'src/pages/',
+      narrative: '你在 <span class="em">Home.tsx</span>，要 import <span class="em">About.tsx</span>。两个住在同一层楼。',
+      correct: 'A',
+      options: [
+        { key: 'A', code: "'./About'",          trail: '同文件夹找同事' },
+        { key: 'B', code: "'../About'",         trail: '回上一层再找' },
+        { key: 'C', code: "'../../About'",      trail: '回两层再找' },
+        { key: 'D', code: "'@/About'",          trail: '查花名册到 src/About' }
+      ],
+      reasons: {
+        A: '✓ 对。两个文件都在 <code>pages/</code> 里 —— 是同事。<code>./</code> 就是"我这层楼里"，最干净。',
+        B: '✗ <code>../About</code> 是先<strong>退回 src/</strong>，再找 About —— 而 src/ 里根本没有 About.tsx 直接挂着。',
+        C: '✗ 多了一层。<code>../../</code> 已经退到项目根了，那里更没有 About.tsx。',
+        D: '✗ 项目里没有 <code>src/About.tsx</code> 直挂在 src 下 —— About 住在 <code>src/pages/About.tsx</code>。'
+      }
+    },
+    {
+      tag: 'ROUND 02 · 跨楼层',
+      from: 'p-home',
+      to: 'l-theme',
+      fromLabel: 'Home.tsx',
+      fromSub: 'src/pages/',
+      toLabel: 'theme.ts',
+      toSub: 'src/lib/',
+      narrative: '你在 <span class="em">Home.tsx</span>，想 import <span class="em">theme.ts</span>。',
+      correct: 'B',
+      options: [
+        { key: 'A', code: "'./theme'",            trail: 'pages/theme — 没这个文件' },
+        { key: 'B', code: "'../lib/theme'",       trail: '退到 src/，下到 lib/，找 theme' },
+        { key: 'C', code: "'../../lib/theme'",    trail: '退到项目根 — 多一层' },
+        { key: 'D', code: "'../theme'",           trail: '退到 src/ 直接找 — 没这文件' }
+      ],
+      reasons: {
+        A: '✗ <code>./</code> 只能找<strong>同文件夹</strong>的同事，<code>theme.ts</code> 不在你这层。',
+        B: '✓ 对。<code>../</code> 退到 <code>src/</code>，再下到 <code>lib/theme</code>。',
+        C: '✗ 多了一层。<code>../../</code> 已经退到项目根了，<code>lib/</code> 是 src 下的子文件夹，所以只需要 <code>../</code>。',
+        D: '✗ 退到 <code>src/</code> 直接找 theme.ts？不在那。它在 <code>src/lib/theme.ts</code> —— 还得再往里走一步。'
+      }
+    },
+    {
+      tag: 'ROUND 03 · 嵌套子文件夹',
+      from: 'p-dashboard',
+      to: 'c-button',
+      fromLabel: 'Dashboard.tsx',
+      fromSub: 'src/pages/admin/',
+      toLabel: 'Button.tsx',
+      toSub: 'src/components/',
+      narrative: '你在 <span class="em">Dashboard.tsx</span>（嵌在 <code>pages/admin/</code> 里），想 import <span class="em">Button.tsx</span>。',
+      correct: 'C',
+      options: [
+        { key: 'A', code: "'./Button'",                 trail: 'admin/Button — 没这个' },
+        { key: 'B', code: "'../components/Button'",     trail: '退一层到 pages/，找 components — 错位' },
+        { key: 'C', code: "'../../components/Button'",  trail: '退两层到 src/，下到 components/，找 Button' },
+        { key: 'D', code: "'@/Button'",                 trail: '查花名册到 src/Button — 直挂没有' }
+      ],
+      reasons: {
+        A: '✗ admin/ 里没 Button.tsx。',
+        B: '✗ <code>../</code> 只退到 <code>pages/</code>，但 <code>components/</code> 是 src 下的同辈，不是 pages 下。',
+        C: '✓ 对。<code>../../</code> 退两层到 <code>src/</code> —— 因为 Dashboard 嵌得深。然后下到 components。',
+        D: '✗ 项目里没有 <code>src/Button.tsx</code> 直挂。要写也得 <code>@/components/Button</code>。'
+      }
+    },
+    {
+      tag: 'ROUND 04 · 别名出场',
+      from: 'p-dashboard',
+      to: 'l-theme',
+      fromLabel: 'Dashboard.tsx',
+      fromSub: 'src/pages/admin/',
+      toLabel: 'theme.ts',
+      toSub: 'src/lib/',
+      narrative: '还在 <span class="em">Dashboard.tsx</span>，这次想 import <span class="em">theme.ts</span>。<strong>用 alias 写</strong>。',
+      correct: 'D',
+      options: [
+        { key: 'A', code: "'./theme'",              trail: '同文件夹 — 没这个' },
+        { key: 'B', code: "'../lib/theme'",         trail: '退到 pages/ 下找 lib — 错' },
+        { key: 'C', code: "'../../theme'",          trail: '退到 src/ 直接找 — 没这个' },
+        { key: 'D', code: "'@/lib/theme'",          trail: '查花名册到 src/lib/theme' }
+      ],
+      reasons: {
+        A: '✗ admin/ 里没有 theme.ts。',
+        B: '✗ <code>../</code> 只退到 pages/，那里没有 lib 文件夹。',
+        C: '✗ 退到 src/ 但 theme 不直挂在 src/，它在 <code>src/lib/theme.ts</code>。',
+        D: '✓ 对。<code>@/</code> = <code>src/</code>，<code>@/lib/theme</code> = <code>src/lib/theme</code>。深嵌套时用 alias 比 <code>../../../</code> 干净得多。'
+      }
+    },
+    {
+      tag: 'ROUND 05 · 反向走',
+      from: 'c-button',
+      to: 'l-utils',
+      fromLabel: 'Button.tsx',
+      fromSub: 'src/components/',
+      toLabel: 'utils.ts',
+      toSub: 'src/lib/',
+      narrative: '你在 <span class="em">Button.tsx</span>（组件层），想 import <span class="em">utils.ts</span>（工具层）。',
+      correct: 'B',
+      options: [
+        { key: 'A', code: "'./utils'",              trail: 'components/utils — 没这个' },
+        { key: 'B', code: "'../lib/utils'",         trail: '退到 src/，下到 lib/，找 utils' },
+        { key: 'C', code: "'../utils'",             trail: '退到 src/ 直接找 — 没这个' },
+        { key: 'D', code: "'../../lib/utils'",      trail: '退到项目根 — 多一层' }
+      ],
+      reasons: {
+        A: '✗ components/ 里没有 utils.ts。<code>./</code> 只看你身边。',
+        B: '✓ 对。<code>../</code> 退到 src/，下到 lib/，找 utils。<strong>同样的"退一层下一层"模式</strong>跟 R02 一样。',
+        C: '✗ <code>../utils</code> 找的是 <code>src/utils.ts</code> —— 项目里没有这个直挂文件。',
+        D: '✗ 多一层。components 是 src 下的子文件夹，只用退一层 <code>../</code>。'
+      }
+    }
+  ];
+
+  let round = 0;     // 0..4
+  let score = 0;
+  let answered = false;
+
+  const treeEl     = document.getElementById('mazeTree');
+  const progressEl = document.getElementById('mazeProgress');
+  const roundEl    = document.getElementById('mazeRound');
+  const scoreEl    = document.getElementById('mazeScore');
+  const taskTagEl  = document.getElementById('mazeTaskTag');
+  const taskQEl    = document.getElementById('mazeTaskQ');
+  const fromCellEl = document.getElementById('mazeFromCell');
+  const fromSubEl  = document.getElementById('mazeFromSub');
+  const toCellEl   = document.getElementById('mazeToCell');
+  const toSubEl    = document.getElementById('mazeToSub');
+  const optsEl     = document.getElementById('mazeOpts');
+  const fbEl       = document.getElementById('mazeFeedback');
+  const nextBtn    = document.getElementById('mazeNext');
+  const restartBtn = document.getElementById('mazeRestart');
+
+  function renderTree() {
+    treeEl.innerHTML = '';
+    const r = rounds[round];
+    tree.forEach(node => {
+      const row = document.createElement('div');
+      row.className = 'mt-row mt-' + node.type;
+      if (node.id === r.from) row.classList.add('is-from');
+      if (node.id === r.to)   row.classList.add('is-to');
+
+      // pad
+      const pad = document.createElement('span');
+      pad.className = 'mt-pad';
+      pad.textContent = '  '.repeat(node.depth) + (node.type === 'folder' ? '▾ ' : '· ');
+      row.appendChild(pad);
+
+      // icon
+      const icon = document.createElement('span');
+      icon.className = 'mt-icon';
+      const inner = document.createElement('span');
+      inner.className = node.type === 'folder' ? 'mt-folder-icon' : 'mt-file-dot';
+      icon.appendChild(inner);
+      row.appendChild(icon);
+
+      // name
+      const name = document.createElement('span');
+      name.className = 'mt-name';
+      name.textContent = node.name;
+      row.appendChild(name);
+
+      treeEl.appendChild(row);
+    });
+  }
+
+  function renderProgress() {
+    const dots = progressEl.querySelectorAll('.mpt-dot');
+    dots.forEach((d, i) => {
+      d.classList.remove('is-current', 'is-done');
+      if (i < round) d.classList.add('is-done');
+      else if (i === round) d.classList.add('is-current');
+    });
+    roundEl.textContent = round + 1;
+    scoreEl.textContent = score;
+  }
+
+  function renderTask() {
+    const r = rounds[round];
+    taskTagEl.textContent = r.tag;
+    taskQEl.innerHTML = r.narrative;
+
+    // route cells
+    fromCellEl.firstChild && (fromCellEl.firstChild.textContent = r.fromLabel + ' ');
+    // simpler — rebuild
+    fromCellEl.innerHTML = r.fromLabel + '<span class="mtr-sub">' + r.fromSub + '</span>';
+    toCellEl.innerHTML   = r.toLabel   + '<span class="mtr-sub">' + r.toSub   + '</span>';
+
+    // options
+    optsEl.innerHTML = '';
+    r.options.forEach(o => {
+      const btn = document.createElement('button');
+      btn.className = 'maze-opt';
+      btn.dataset.key = o.key;
+      btn.dataset.code = o.code;
+      btn.innerHTML = o.code + '<span class="maze-opt-trail">' + o.trail + '</span>';
+      btn.addEventListener('click', () => answer(o.key, btn));
+      optsEl.appendChild(btn);
+    });
+
+    // feedback reset
+    fbEl.className = 'maze-feedback';
+    fbEl.innerHTML = '<span class="mf-tag">提示 · HINT</span>看左边树里 YOU 和 TARGET，<strong>从 YOU 出发</strong>，想想要走多少层 / 走哪个方向。';
+
+    answered = false;
+    nextBtn.disabled = true;
+    nextBtn.textContent = round === rounds.length - 1 ? '看结果 →' : '下一关 →';
+  }
+
+  function answer(key, btn) {
+    if (answered) return;
+    const r = rounds[round];
+    const isCorrect = key === r.correct;
+
+    // dim siblings
+    optsEl.querySelectorAll('.maze-opt').forEach(b => b.classList.add('is-locked'));
+
+    if (isCorrect) {
+      btn.classList.add('is-correct');
+      score++;
+      fbEl.className = 'maze-feedback is-good';
+      fbEl.innerHTML = '<span class="mf-tag">对了 · CORRECT</span>' + r.reasons[key];
+    } else {
+      btn.classList.add('is-wrong');
+      // dim others, but show the correct one in green
+      optsEl.querySelectorAll('.maze-opt').forEach(b => {
+        if (b.dataset.key === r.correct) b.classList.add('is-correct');
+        else if (b !== btn) b.classList.add('is-dim');
+      });
+      fbEl.className = 'maze-feedback is-bad';
+      fbEl.innerHTML = '<span class="mf-tag">还差点 · NOT QUITE</span>' + r.reasons[key]
+        + '<br><br><strong>对的是：</strong> <code>' + r.options.find(o => o.key === r.correct).code + '</code> —— ' + r.reasons[r.correct].replace('✓ 对。', '');
+    }
+
+    answered = true;
+    nextBtn.disabled = false;
+    scoreEl.textContent = score;
+  }
+
+  function nextRound() {
+    if (!answered) return;
+    if (round < rounds.length - 1) {
+      round++;
+      renderProgress();
+      renderTree();
+      renderTask();
+    } else {
+      finish();
+    }
+  }
+
+  function finish() {
+    // Replace the panel content with a finish card
+    const panel = stage.querySelector('.maze-panel');
+    const remark =
+      score === 5 ? '满分。下次看 AI 给你写 import，扫一眼就知道对不对。' :
+      score >= 3  ? '过半 —— 已经能跟 AI 对得上话。回头再来一遍把规则吃进去。' :
+                    '别气馁。前几次都是这样。重点是分清"我在哪"和"目标在哪" —— 数 ../ 时手指头点屏幕。';
+
+    panel.innerHTML =
+      '<div class="maze-finish">' +
+      '<div class="mfin-tag">完成 · COMPLETED</div>' +
+      '<h4>5 关 <span class="em">→</span> 走完了</h4>' +
+      '<div class="mfin-score">SCORE · <strong>' + score + '</strong> / 5</div>' +
+      '<p>' + remark + '</p>' +
+      '<button id="mazeAgain">↻ 再来一遍</button>' +
+      '</div>';
+
+    document.getElementById('mazeAgain').addEventListener('click', restart);
+  }
+
+  function restart() {
+    round = 0;
+    score = 0;
+    answered = false;
+
+    // restore panel structure if we destroyed it on finish
+    const panel = stage.querySelector('.maze-panel');
+    if (!document.getElementById('mazeTask')) {
+      panel.innerHTML =
+        '<div class="maze-progress">' +
+          '<div class="maze-progress-track" id="mazeProgress">' +
+            '<span class="mpt-dot is-current"></span>' +
+            '<span class="mpt-dot"></span>' +
+            '<span class="mpt-dot"></span>' +
+            '<span class="mpt-dot"></span>' +
+            '<span class="mpt-dot"></span>' +
+          '</div>' +
+          '<div class="maze-progress-meta">第 <strong id="mazeRound">1</strong> / 5 关</div>' +
+          '<div class="maze-score">SCORE · <strong id="mazeScore">0</strong> / 5</div>' +
+        '</div>' +
+        '<div class="maze-task" id="mazeTask">' +
+          '<div class="maze-task-tag" id="mazeTaskTag"></div>' +
+          '<h3 class="maze-task-q" id="mazeTaskQ"></h3>' +
+          '<div class="maze-task-route">' +
+            '<div class="mtr-cell from" id="mazeFromCell"></div>' +
+            '<div class="mtr-arrow">→</div>' +
+            '<div class="mtr-cell to" id="mazeToCell"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="maze-options" id="mazeOpts"></div>' +
+        '<div class="maze-feedback" id="mazeFeedback"></div>' +
+        '<div class="maze-controls">' +
+          '<button class="maze-btn maze-btn-ghost" id="mazeRestart">↻ 从第一关</button>' +
+          '<button class="maze-btn" id="mazeNext" disabled>下一关 →</button>' +
+        '</div>';
+      // re-bind
+      bindControls();
+    }
+    renderProgress();
+    renderTree();
+    renderTask();
+  }
+
+  function bindControls() {
+    document.getElementById('mazeNext').addEventListener('click', nextRound);
+    document.getElementById('mazeRestart').addEventListener('click', restart);
+  }
+
+  // initial
+  bindControls();
+  renderProgress();
+  renderTree();
+  renderTask();
+})();
+
+// ==========================================================
+//  Roadmap modal
+// ==========================================================
+(function(){
+  var modal = document.getElementById('rm-modal');
+  if (!modal) return;
+  var openBtns = document.querySelectorAll('[data-rm-open]');
+  var closeBtns = modal.querySelectorAll('[data-rm-close]');
+  function open() { modal.hidden = false; document.body.style.overflow = 'hidden'; }
+  function close() { modal.hidden = true; document.body.style.overflow = ''; }
+  openBtns.forEach(function(b){ b.addEventListener('click', function(e){ e.preventDefault(); open(); }); });
+  closeBtns.forEach(function(b){ b.addEventListener('click', close); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !modal.hidden) close(); });
+})();
+</script>
+
+
+<!-- 路线图弹窗 (10 分类) -->
+<div class="rm-modal" id="rm-modal" hidden>
+  <div class="rm-backdrop" data-rm-close></div>
+  <div class="rm-dialog" role="dialog" aria-label="完整路线图">
+    <button class="rm-close" data-rm-close aria-label="关闭">✕</button>
+    <div class="rm-header">
+      <div class="rm-tag">阅读顺序 · ROADMAP</div>
+      <h3 class="rm-title">START → 10 分类 <span class="rm-em">·</span> 35 篇</h3>
+      <p class="rm-sub">01 界面拆解 5 · 02 视觉系统 3 · 03 状态动作 3 · 04 样式翻译 4 · 05 AI 实现 4 · 06 组件材料 3 · 07 项目启动 4 · 08 调试 3 · 09 协作 3 · 10 上线 3</p>
+    </div>
+    <div class="rm-body">
+      <div class="rm-mod">
+        <div class="rm-mod-key">01 · 界面怎么被代码拆开</div>
+        <div class="rm-mod-list">
+          <a href="basics-figma.html" class="rm-cell"><span class="rm-cell-code">A0</span><span class="rm-cell-name">三件套 · HTML / CSS / JS</span><span class="rm-cell-tier">入门</span></a>
+          <a href="box-figma.html" class="rm-cell"><span class="rm-cell-code">A1</span><span class="rm-cell-name">盒子 · Auto Layout</span><span class="rm-cell-tier">基础</span></a>
+          <a href="components-figma.html" class="rm-cell"><span class="rm-cell-code">A2</span><span class="rm-cell-name">组件 · Variants &amp; Props</span><span class="rm-cell-tier">基础</span></a>
+          <a href="button-system-figma.html" class="rm-cell"><span class="rm-cell-code">A3</span><span class="rm-cell-name">Button System · 组件演化</span><span class="rm-cell-tier">进阶</span></a>
+          <a href="page-figma.html" class="rm-cell"><span class="rm-cell-code">B0</span><span class="rm-cell-name">拼页面 · 组件嵌套</span><span class="rm-cell-tier">入门</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">02 · 视觉规则怎么变成系统</div>
+        <div class="rm-mod-list">
+          <a href="tokens-figma.html" class="rm-cell"><span class="rm-cell-code">C0</span><span class="rm-cell-name">Variables / Tokens 入门</span><span class="rm-cell-tier">入门</span></a>
+          <a href="colors-type-figma.html" class="rm-cell"><span class="rm-cell-code">C1</span><span class="rm-cell-name">Colors / Type / Spacing</span><span class="rm-cell-tier">基础</span></a>
+          <a href="theme-switch-figma.html" class="rm-cell"><span class="rm-cell-code">C2</span><span class="rm-cell-name">Theme 切换实战</span><span class="rm-cell-tier">进阶</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">03 · 界面怎么有状态和动作</div>
+        <div class="rm-mod-list">
+          <a href="states-figma.html" class="rm-cell"><span class="rm-cell-code">D0</span><span class="rm-cell-name">视觉态 · 看得见的状态</span><span class="rm-cell-tier">入门</span></a>
+          <a href="interactive-figma.html" class="rm-cell"><span class="rm-cell-code">D1</span><span class="rm-cell-name">Interactive Component</span><span class="rm-cell-tier">基础</span></a>
+          <a href="transition-figma.html" class="rm-cell"><span class="rm-cell-code">D2</span><span class="rm-cell-name">动画 · Transition</span><span class="rm-cell-tier">进阶</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">04 · 设计样式怎么翻译成 CSS</div>
+        <div class="rm-mod-list">
+          <a href="inverted-radius-figma.html" class="rm-cell"><span class="rm-cell-code">S1</span><span class="rm-cell-name">内翻圆角 · Inverted Border Radius</span><span class="rm-cell-tier">样式</span></a>
+          <a href="shadow-layer-figma.html" class="rm-cell"><span class="rm-cell-code">S2</span><span class="rm-cell-name">阴影 / 层级 · Shadow &amp; Elevation</span><span class="rm-cell-tier">样式</span></a>
+          <a href="glass-blur-figma.html" class="rm-cell"><span class="rm-cell-code">S3</span><span class="rm-cell-name">毛玻璃 / 背景模糊 · Backdrop Blur</span><span class="rm-cell-tier">样式</span></a>
+          <a href="mask-crop-figma.html" class="rm-cell"><span class="rm-cell-code">S4</span><span class="rm-cell-name">遮罩 / 裁切 · Mask &amp; Clip</span><span class="rm-cell-tier">样式</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key" style="color:var(--accent);">05 · AI 怎么参与实现</div>
+        <div class="rm-mod-list">
+          <a href="q1-mcp-figma.html" class="rm-cell"><span class="rm-cell-code">Q1</span><span class="rm-cell-name">MCP · AI 的 USB 接口</span><span class="rm-cell-tier">工具</span></a>
+          <a href="q2-skills-figma.html" class="rm-cell"><span class="rm-cell-code">Q2</span><span class="rm-cell-name">Skills · SKILL.md 拆解</span><span class="rm-cell-tier">工具</span></a>
+          <a href="q3-agent-figma.html" class="rm-cell"><span class="rm-cell-code">Q3</span><span class="rm-cell-name">Agent · 团队式 AI</span><span class="rm-cell-tier">工具</span></a>
+          <a href="k4-mcp-reads-figma.html" class="rm-cell"><span class="rm-cell-code">K4</span><span class="rm-cell-name">MCP 读了啥 · AI 看到的设计稿</span><span class="rm-cell-tier">基础</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">06 · 用什么材料搭界面</div>
+        <div class="rm-mod-list">
+          <a href="k1-ui-library-figma.html" class="rm-cell"><span class="rm-cell-code">K1</span><span class="rm-cell-name">UI 库 · shadcn vs Antd</span><span class="rm-cell-tier">基础</span></a>
+          <a href="k2-shadcn-customize-figma.html" class="rm-cell"><span class="rm-cell-code">K2</span><span class="rm-cell-name">shadcn 改造 · 变成你家的</span><span class="rm-cell-tier">基础</span></a>
+          <a href="k3-granularity-figma.html" class="rm-cell"><span class="rm-cell-code">K3</span><span class="rm-cell-name">颗粒度的代价 · AI 拼不准的根因</span><span class="rm-cell-tier">基础</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">07 · 项目怎么跑起来</div>
+        <div class="rm-mod-list">
+          <a href="f1-npm-figma.html" class="rm-cell"><span class="rm-cell-code">F1</span><span class="rm-cell-name">npm 是什么</span><span class="rm-cell-tier">工程</span></a>
+          <a href="f2-import-figma.html" class="rm-cell"><span class="rm-cell-code">F2</span><span class="rm-cell-name">import 与路径</span><span class="rm-cell-tier">工程</span></a>
+          <a href="f3-dev-build-figma.html" class="rm-cell"><span class="rm-cell-code">F3</span><span class="rm-cell-name">dev vs build</span><span class="rm-cell-tier">工程</span></a>
+          <a href="f4-hidden-files-figma.html" class="rm-cell"><span class="rm-cell-code">F4</span><span class="rm-cell-name">看不见的文件</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">08 · 坏了怎么查</div>
+        <div class="rm-mod-list">
+          <a href="h1-devtools-elements-figma.html" class="rm-cell"><span class="rm-cell-code">H1</span><span class="rm-cell-name">DevTools Elements</span><span class="rm-cell-tier">工程</span></a>
+          <a href="h2-console-error-figma.html" class="rm-cell"><span class="rm-cell-code">H2</span><span class="rm-cell-name">Console 报错</span><span class="rm-cell-tier">工程</span></a>
+          <a href="h3-network-figma.html" class="rm-cell"><span class="rm-cell-code">H3</span><span class="rm-cell-name">Network 面板</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">09 · 怎么协作</div>
+        <div class="rm-mod-list">
+          <a href="g1-commit-branch-figma.html" class="rm-cell"><span class="rm-cell-code">G1</span><span class="rm-cell-name">commit / branch</span><span class="rm-cell-tier">工程</span></a>
+          <a href="g2-conflict-figma.html" class="rm-cell"><span class="rm-cell-code">G2</span><span class="rm-cell-name">冲突怎么解</span><span class="rm-cell-tier">工程</span></a>
+          <a href="g3-pr-review-figma.html" class="rm-cell"><span class="rm-cell-code">G3</span><span class="rm-cell-name">PR / Review</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">10 · 怎么上线</div>
+        <div class="rm-mod-list">
+          <a href="j1-dns-figma.html" class="rm-cell"><span class="rm-cell-code">J1</span><span class="rm-cell-name">DNS / 域名</span><span class="rm-cell-tier">工程</span></a>
+          <a href="j2-vercel-figma.html" class="rm-cell"><span class="rm-cell-code">J2</span><span class="rm-cell-name">Vercel 部署</span><span class="rm-cell-tier">工程</span></a>
+          <a href="j3-cache-cdn-figma.html" class="rm-cell"><span class="rm-cell-code">J3</span><span class="rm-cell-name">缓存 / CDN</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var modal = document.getElementById('rm-modal');
+  if (!modal) return;
+  var openBtns = document.querySelectorAll('[data-rm-open]');
+  var closeBtns = modal.querySelectorAll('[data-rm-close]');
+  function open() { modal.hidden = false; document.body.style.overflow = 'hidden'; }
+  function close() { modal.hidden = true; document.body.style.overflow = ''; }
+  openBtns.forEach(function(b){ b.addEventListener('click', function(e){ e.preventDefault(); open(); }); });
+  closeBtns.forEach(function(b){ b.addEventListener('click', close); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !modal.hidden) close(); });
+})();
+</script>
+
+<script>
+/* inject signature gradient defs into journey SVG */
+(function(){
+  function inject(){
+    var svg = document.getElementById('journey-svg');
+    if(!svg || svg.querySelector('#sig-grad-svg')) return;
+    var ns = 'http://www.w3.org/2000/svg';
+    var defs = document.createElementNS(ns,'defs');
+    var lg = document.createElementNS(ns,'linearGradient');
+    lg.setAttribute('id','sig-grad-svg');
+    lg.setAttribute('x1','0'); lg.setAttribute('y1','0');
+    lg.setAttribute('x2','1'); lg.setAttribute('y2','1');
+    var stops = [
+      ['0%','#D52D00'], ['18%','#EF7627'], ['33%','#FF9A56'],
+      ['50%','#F7F4EC'],
+      ['67%','#D162A4'], ['82%','#B55690'], ['100%','#A30262']
+    ];
+    stops.forEach(function(s){
+      var st = document.createElementNS(ns,'stop');
+      st.setAttribute('offset',s[0]);
+      st.setAttribute('stop-color',s[1]);
+      lg.appendChild(st);
+    });
+    defs.appendChild(lg);
+    svg.insertBefore(defs, svg.firstChild);
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',inject);
+  } else { inject(); }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,3665 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP 是什么 — 让 AI 长出"手"的协议</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  @font-face {
+    font-family: 'Alimama ShuHeiTi';
+    src: local('Alimama ShuHeiTi VF'),
+         local('Alimama ShuHeiTi'),
+         local('阿里妈妈数黑体'),
+         url('fonts/AlimamaShuHeiTi-Bold.woff2') format('woff2');
+    font-weight: 400 900;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --bg: #f7f4ec;
+    --bg-2: #e4e4e7;
+    --ink: #16161d;
+    --ink-soft: #4a4a55;
+    --ink-mute: #8a8a92;
+    --line: #e4e4e7;
+    --line-soft: #e3dcca;
+    --accent: #EF7627;
+    --accent-soft: #ffe4dc;
+    --blue: #0a4cff;
+    --blue-soft: #dde6ff;
+    --green: #1f6b3a;
+    --green-soft: #d4ecdb;
+    --yellow: #ffcf3d;
+    --yellow-soft: #fff2c4;
+    --paper: #faf7f0;
+    --warn: #b48010;
+    --shadow: 0 1px 0 rgba(0,0,0,0.04), 0 8px 24px rgba(22,22,29,0.06);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Geist', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(22,22,29,0.05) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+
+  /* Typography — NO italic anywhere */
+  .display-cn { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-weight: 900; letter-spacing: -0.01em; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .label { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); }
+  em, i { font-style: normal; }
+
+  /* Layout */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+
+  /* Top bar */
+  .topbar {
+    border-bottom: 1px dashed var(--line);
+    padding: 16px 0;
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-inner { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+  .brand { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }
+  .brand .dot { display: inline-block; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; margin-right: 8px; vertical-align: middle; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .nav-links { display: flex; gap: 20px; font-size: 13px; }
+  .nav-links a { color: var(--ink-soft); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-links a.current { color: var(--accent); font-weight: 600; }
+  a.brand { text-decoration: none; color: inherit; transition: color 0.2s; cursor: pointer; }
+  a.brand:hover { color: var(--accent); }
+  .brand-block { display: flex; align-items: center; min-width: 0; flex: 1; }
+  .brand-block .brand { flex-shrink: 0; }
+  .brand-arrow { margin-right: 6px; color: var(--ink-mute); display: inline-block; transition: transform 0.2s, color 0.2s; }
+  .brand:hover .brand-arrow { color: var(--accent); transform: translateX(-2px); }
+  .brand-sep { margin: 0 10px; color: var(--ink-mute); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 300; }
+  .brand-current { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; color: var(--ink-soft); letter-spacing: 0.02em; }
+  @media (max-width: 760px) { .brand-sep, .brand-current { display: none; } }
+  .nav-links a[data-rm-open] { cursor: pointer; }
+
+  /* Hero */
+  .hero { padding: 100px 0 80px; position: relative; overflow: hidden; }
+  .hero-meta { display: flex; gap: 24px; margin-bottom: 32px; align-items: center; flex-wrap: wrap; }
+  .hero-meta .pill { padding: 6px 12px; border: 1px solid var(--ink); border-radius: 100px; font-size: 11px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em; }
+  .hero-meta .pill.fill { background: var(--ink); color: var(--bg); }
+  .hero h1 {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 900;
+    font-size: clamp(48px, 7vw, 92px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    margin: 0 0 24px;
+  }
+  .hero h1 .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-weight: 500; color: var(--accent); font-style: normal; }
+  .hero p.lede {
+    font-size: 20px;
+    line-height: 1.5;
+    max-width: 640px;
+    color: var(--ink-soft);
+    margin: 0 0 40px;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 48px;
+    align-items: end;
+  }
+  @media (max-width: 880px) { .hero-grid { grid-template-columns: 1fr; } }
+  .hero-side {
+    border-left: 1px dashed var(--line);
+    padding-left: 24px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .hero-side .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+  .hero-side .row:last-child { border-bottom: none; }
+  .hero-side .row .k { color: var(--ink-mute); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .hero-side .row .v { font-weight: 500; }
+
+  /* Generic .em (no italic) */
+  .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-weight: 500; color: var(--accent); font-style: normal; }
+
+  /* Section base */
+  section { padding: 80px 0; border-top: 1px solid var(--line); position: relative; }
+  .section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 56px; flex-wrap: wrap; gap: 16px; }
+  .section-num { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink-mute); letter-spacing: 0.1em; }
+  .section-num strong { color: var(--accent); }
+  .section-title {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 900;
+    font-size: clamp(32px, 4.5vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0;
+    max-width: 18ch;
+  }
+  .section-title .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-weight: 500; color: var(--accent); font-style: normal; }
+  .section-sub { color: var(--ink-soft); font-size: 17px; max-width: 38ch; line-height: 1.55; margin: 0; }
+
+  /* Helper hint strip */
+  .hint-strip {
+    margin-top: 24px;
+    padding: 14px 18px;
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    font-size: 13.5px;
+    color: var(--ink);
+    line-height: 1.6;
+  }
+  .hint-strip .hint-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    margin-right: 10px;
+    text-transform: uppercase;
+  }
+  .hint-strip code { font-family: 'JetBrains Mono', monospace; background: rgba(255,255,255,0.55); padding: 1px 6px; border-radius: 3px; font-size: 12.5px; }
+  .hint-strip strong { font-weight: 600; }
+
+  /* ============== §01 — Folder explorer ============== */
+  .folder-stage {
+    margin-top: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .folder-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 0;
+    min-height: 460px;
+  }
+  @media (max-width: 880px) { .folder-grid { grid-template-columns: 1fr; } }
+
+  .folder-tree {
+    background: #1e1e25;
+    color: #d8d8e0;
+    padding: 24px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.95;
+    border-right: 1px solid var(--line);
+    position: relative;
+  }
+  .folder-tree .ft-head {
+    color: #6e6e7a;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    border-bottom: 1px dashed rgba(255,255,255,0.08);
+    padding-bottom: 10px;
+  }
+  .folder-tree .ft-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    margin: 0 -8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.5s ease, opacity 0.5s ease;
+    user-select: none;
+  }
+  .folder-tree .ft-row:hover { background: rgba(255,255,255,0.06); }
+  .folder-tree .ft-row.is-active { background: rgba(255,77,46,0.18); color: #ffb39a; }
+  .folder-tree .ft-row.is-required { color: #ffb39a; }
+  .folder-tree .ft-row.is-required.is-active { background: rgba(255,77,46,0.28); color: #fff; }
+  .folder-tree .ft-icon {
+    width: 16px;
+    text-align: center;
+    color: #888;
+    flex-shrink: 0;
+  }
+  .folder-tree .ft-row.is-folder .ft-icon { color: #ffcf3d; }
+  .folder-tree .ft-row.is-required .ft-icon { color: #ff8a6e; }
+  .folder-tree .ft-name { flex: 1; }
+  .folder-tree .ft-tag {
+    font-size: 10px;
+    color: #6e6e7a;
+    letter-spacing: 0.05em;
+    padding: 1px 6px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 3px;
+  }
+  .folder-tree .ft-row.is-required .ft-tag {
+    color: #ff8a6e;
+    border-color: rgba(255,138,110,0.4);
+  }
+  .folder-tree .ft-indent-1 { padding-left: 28px; }
+  .folder-tree .ft-indent-2 { padding-left: 52px; }
+  .folder-tree .ft-row.fly-out {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  .folder-tree .ft-row.fly-in {
+    animation: ftFly 0.55s ease-out;
+  }
+  @keyframes ftFly {
+    0%   { transform: translateX(-32px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  .folder-tree .ft-toolbar {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px dashed rgba(255,255,255,0.1);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .folder-tree .ft-toolbar button {
+    background: rgba(255,255,255,0.06);
+    color: #d8d8e0;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 6px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.18s;
+    letter-spacing: 0.04em;
+  }
+  .folder-tree .ft-toolbar button:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .folder-tree .ft-toolbar .ft-hint {
+    font-size: 10px;
+    color: #6e6e7a;
+    margin-left: auto;
+    letter-spacing: 0.06em;
+  }
+
+  .folder-detail {
+    background: var(--paper);
+    padding: 24px 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .folder-detail .fd-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .folder-detail .fd-name {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .folder-detail .fd-name code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg-2);
+    padding: 2px 8px;
+    font-size: 18px;
+    border-radius: 4px;
+    color: var(--ink);
+  }
+  .folder-detail .fd-meta {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.04em;
+  }
+  .folder-detail .fd-meta .req {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .folder-detail .fd-meta .opt {
+    color: var(--ink-soft);
+  }
+  .folder-detail .fd-desc {
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .folder-detail .fd-desc strong { color: var(--ink); font-weight: 600; }
+  .folder-detail .fd-mock {
+    background: var(--ink);
+    color: #d8d8e0;
+    padding: 16px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    border-radius: 6px;
+    line-height: 1.75;
+    overflow-x: auto;
+    margin: 0;
+    flex: 1;
+  }
+  .folder-detail .fd-mock .ccom { color: #6e6e7a; }
+  .folder-detail .fd-mock .ckey { color: #ff8a6e; }
+  .folder-detail .fd-mock .cstr { color: #a8e6a3; }
+  .folder-detail .fd-mock .cnum { color: #8ec5ff; }
+  .folder-detail .fd-mock .cmark { color: #ffcf3d; }
+  .folder-detail .fd-mock .ctag { color: #c9b6ff; }
+
+  /* ============== §03 — Pyramid ============== */
+  .pyramid-stage {
+    margin-top: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 32px 32px 28px;
+  }
+  .pyramid-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: center;
+  }
+  @media (max-width: 880px) { .pyramid-grid { grid-template-columns: 1fr; gap: 24px; } }
+
+  .pyramid-svg {
+    width: 100%;
+    height: 380px;
+    display: block;
+  }
+  .pyramid-svg .py-tier {
+    transition: opacity 0.4s ease, filter 0.4s ease;
+  }
+  .pyramid-svg .py-tier.dimmed {
+    opacity: 0.28;
+    filter: saturate(0.4);
+  }
+  .pyramid-svg .py-tier.active polygon,
+  .pyramid-svg .py-tier.active rect {
+    filter: drop-shadow(0 4px 16px rgba(255,77,46,0.35));
+  }
+  .pyramid-svg .py-flow {
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-dasharray: 6 5;
+    fill: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .pyramid-svg .py-flow.active {
+    opacity: 0.85;
+    animation: pyDash 1.4s linear infinite;
+  }
+  @keyframes pyDash { to { stroke-dashoffset: -22; } }
+
+  .pyramid-side {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .pyramid-input {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .pyramid-input label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 8px;
+    display: block;
+  }
+  .pyramid-input .py-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .pyramid-input .py-chips button {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    padding: 6px 12px;
+    font-family: inherit;
+    font-size: 12px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pyramid-input .py-chips button:hover { border-color: var(--accent); color: var(--accent); }
+  .pyramid-input .py-chips button.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: white;
+  }
+  .pyramid-input .py-query {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink);
+    min-height: 24px;
+    line-height: 1.45;
+  }
+  .pyramid-input .py-query .py-prompt { color: var(--accent); margin-right: 6px; }
+
+  .pyramid-trace {
+    background: var(--ink);
+    color: #d8d8e0;
+    border-radius: 6px;
+    padding: 16px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.85;
+    min-height: 180px;
+  }
+  .pyramid-trace .pt-row {
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .pyramid-trace .pt-row.show {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .pyramid-trace .pt-tier {
+    color: #ff8a6e;
+    margin-right: 6px;
+    font-weight: 600;
+  }
+  .pyramid-trace .pt-tok {
+    color: #8ec5ff;
+    margin-left: 6px;
+  }
+  .pyramid-trace .pt-skill {
+    color: #a8e6a3;
+  }
+  .pyramid-trace .pt-meta {
+    color: #6e6e7a;
+    font-size: 10px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(255,255,255,0.1);
+    letter-spacing: 0.05em;
+  }
+
+  /* ============== §06 — Cheatsheet ============== */
+  .cheat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 24px;
+  }
+  @media (max-width: 880px) { .cheat-grid { grid-template-columns: 1fr; } }
+  .cheat-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 22px 22px 24px;
+    border-top: 4px solid var(--accent);
+  }
+  .cheat-card.b { border-top-color: #c9b6ff; }
+  .cheat-card.c { border-top-color: var(--yellow); }
+  .cheat-card .cc-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .cheat-card h4 {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 22px;
+    margin: 0 0 6px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+  .cheat-card .cc-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+    letter-spacing: 0.05em;
+  }
+  .cheat-card pre.cheat-tree {
+    background: var(--ink);
+    color: #d8d8e0;
+    padding: 14px 14px;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    line-height: 1.85;
+    margin: 0 0 12px;
+    overflow-x: auto;
+  }
+  .cheat-card pre.cheat-tree .ccom { color: #6e6e7a; }
+  .cheat-card pre.cheat-tree .cmark { color: #ff8a6e; }
+  .cheat-card pre.cheat-tree .ckey { color: #ffcf3d; }
+  .cheat-card dl { margin: 0; padding: 0; font-size: 13px; }
+  .cheat-card dl dt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 12px;
+  }
+  .cheat-card dl dt:first-child { margin-top: 0; }
+  .cheat-card dl dd {
+    margin: 4px 0 0;
+    color: var(--ink-soft);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .cheat-card dl dd strong { color: var(--ink); font-weight: 600; }
+  .cheat-card dl dd code { font-family: 'JetBrains Mono', monospace; background: var(--bg-2); padding: 1px 6px; border-radius: 3px; font-size: 12px; color: var(--ink); }
+
+  .cheat-flow {
+    background: var(--bg);
+    border: 1px dashed var(--line);
+    border-radius: 4px;
+    padding: 12px 14px;
+    margin-top: 4px;
+  }
+  .cheat-flow .cf-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 0;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .cheat-flow .cf-step .cf-tier {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 2px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+    font-weight: 600;
+    margin-top: 1px;
+  }
+  .cheat-flow .cf-step strong { color: var(--ink); font-weight: 600; }
+
+  /* ============= Unified next-post block ============= */
+  .next-post {
+    margin-top: 48px;
+    padding: 32px 36px;
+    background: var(--ink);
+    color: var(--bg);
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: center;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .next-post::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 100% 0%, rgba(255,77,46,0.12), transparent 55%);
+    pointer-events: none;
+  }
+  .next-post:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(22,22,29,0.22); }
+  @media (max-width: 720px) { .next-post { grid-template-columns: 1fr; padding: 24px; gap: 20px; } }
+  .next-post .np-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .next-post .np-tag .np-status {
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.7);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+  .next-post h4 {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 26px;
+    margin: 0 0 10px;
+    font-weight: 700;
+    color: white;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .next-post h4 .em {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 500;
+    color: var(--accent);
+    font-style: normal;
+  }
+  .next-post p {
+    margin: 0;
+    color: rgba(255,255,255,0.72);
+    font-size: 14px;
+    line-height: 1.65;
+    max-width: 560px;
+  }
+  .next-post p strong { color: white; font-weight: 600; }
+  .next-post .np-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 24px;
+    background: var(--accent);
+    color: white;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    transition: background 0.18s, color 0.18s, transform 0.18s;
+    position: relative;
+    z-index: 1;
+  }
+  .next-post:hover .np-cta { background: white; color: var(--ink); transform: translateX(2px); }
+  .next-post .np-cta .arr { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-size: 18px; font-weight: 500; }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 56px 0 64px;
+    background: var(--bg);
+  }
+  .byline {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    padding-bottom: 32px;
+    border-bottom: 1px dashed var(--line);
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .byline::before {
+    content: '';
+    position: absolute;
+    top: -56px; left: 0;
+    width: 32px; height: 1px;
+    background: var(--accent);
+  }
+  .byline .avatar {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 3px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--line), 0 6px 20px rgba(22,22,29,0.10);
+    background: var(--paper);
+  }
+  .byline-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.18em;
+    margin-bottom: 8px;
+  }
+  .byline-label .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: 1px;
+  }
+  .byline-name {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+  }
+  .byline-name .em {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 500;
+    color: var(--accent);
+    font-style: normal;
+  }
+  .byline-tag {
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    margin: 0;
+    max-width: 52ch;
+  }
+  .footer-meta {
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-mute);
+    letter-spacing: 0.05em;
+  }
+  .footer-meta .heart { color: var(--accent); }
+  .footer-meta .mono { color: var(--ink-soft); font-weight: 500; }
+  @media (max-width: 600px) {
+    .byline { flex-direction: column; text-align: center; align-items: center; gap: 16px; }
+    .byline-tag { margin-left: auto; margin-right: auto; }
+  }
+  .byline-contact { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; }
+  .byline-contact .contact-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); padding: 2px 8px; border: 1px solid var(--line); border-radius: 3px; }
+  .byline-contact .contact-id { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--ink); background: var(--accent-soft); padding: 3px 10px; border-radius: 4px; letter-spacing: 0.02em; }
+  .byline-contact .contact-hint { font-size: 12px; color: var(--ink-soft); }
+
+  /* Subtle entry animation */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  section { animation: fadeIn 0.6s ease-out backwards; }
+
+  /* === Roadmap Modal === */
+  .rm-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 30px 16px; }
+  .rm-modal[hidden] { display: none; }
+  .rm-backdrop { position: absolute; inset: 0; background: rgba(22,22,29,0.55); backdrop-filter: blur(4px); animation: rm-fade 0.2s; }
+  @keyframes rm-fade { from { opacity: 0; } to { opacity: 1; } }
+  .rm-dialog { position: relative; background: var(--bg); border-radius: 12px; max-width: 720px; width: 100%; max-height: calc(100vh - 60px); overflow-y: auto; padding: 32px 36px 24px; box-shadow: 0 30px 80px rgba(0,0,0,0.3); animation: rm-pop 0.25s cubic-bezier(0.4,0,0.2,1); }
+  @keyframes rm-pop { from { transform: scale(0.96) translateY(8px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+  .rm-close { position: absolute; top: 14px; right: 16px; background: transparent; border: none; cursor: pointer; font-size: 20px; color: var(--ink-mute); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.15s; line-height: 1; }
+  .rm-close:hover { background: var(--bg-2); color: var(--ink); }
+  .rm-header { margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px dashed var(--line); }
+  .rm-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
+  .rm-title { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-size: 28px; margin: 0 0 6px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.1; }
+  .rm-title .rm-em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; color: var(--accent); font-weight: 500; }
+  .rm-sub { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-mute); margin: 0; }
+  .rm-body { display: flex; flex-direction: column; gap: 18px; }
+  .rm-mod-key { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink); font-weight: 700; margin-bottom: 8px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .rm-mod-list { display: flex; flex-direction: column; gap: 6px; }
+  .rm-cell { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; padding: 9px 13px; border-radius: 5px; background: var(--paper); border: 1px solid var(--line); text-decoration: none; color: inherit; transition: all 0.15s; }
+  .rm-cell:hover { border-color: var(--accent); background: var(--accent-soft); transform: translateX(3px); }
+  .rm-cell-code { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-weight: 500; color: var(--accent); font-size: 15px; }
+  .rm-cell-name { font-size: 13px; color: var(--ink); }
+  .rm-cell-tbd { background: var(--bg-2); border-style: dashed; cursor: default; opacity: 0.6; }
+  .rm-cell-tbd:hover { transform: none; border-color: var(--line); background: var(--bg-2); }
+  .rm-cell-tier { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.08em; color: var(--ink-mute); text-transform: uppercase; border: 1px solid var(--line); padding: 2px 7px; border-radius: 3px; }
+  .rm-footer { margin-top: 22px; padding-top: 16px; border-top: 1px dashed var(--line); display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink-soft); flex-wrap: wrap; gap: 8px; }
+  .rm-wechat { font-family: 'JetBrains Mono', monospace; background: var(--accent-soft); color: var(--ink); padding: 3px 10px; border-radius: 3px; font-weight: 600; letter-spacing: 0.02em; }
+
+  /* ============== §04 — Figma Skills 实例 ============== */
+  .fk-intro {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 22px 26px;
+    margin-bottom: 30px;
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--ink);
+  }
+  .fk-intro strong { color: var(--ink); font-weight: 700; }
+  .fk-intro .em { color: var(--accent); font-weight: 700; }
+  .fk-intro code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    background: var(--accent-soft);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .fk-group-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    margin: 28px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .fk-group-title::before {
+    content: '';
+    width: 16px;
+    height: 2px;
+    background: var(--accent);
+    display: inline-block;
+  }
+
+  .fk-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+
+  .fk-card {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 18px 20px;
+    transition: all 0.18s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .fk-card:hover {
+    border-color: var(--ink);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+  .fk-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s ease;
+  }
+  .fk-card:hover::before { transform: scaleX(1); }
+
+  .fk-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .fk-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+  .fk-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    color: var(--ink-mute);
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 2px 7px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .fk-title {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--ink);
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+  .fk-desc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.7;
+    background: #1f1f29;
+    color: #d8d8e0;
+    padding: 10px 12px;
+    border-radius: 5px;
+    margin-bottom: 12px;
+    word-break: break-word;
+  }
+  .fk-when {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .fk-when strong { color: var(--ink); font-weight: 600; }
+
+  /* 流程图 */
+  .fk-flow {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+    gap: 8px;
+    align-items: stretch;
+    margin: 24px 0 16px;
+  }
+  .fk-flow .flow-node {
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 6px;
+    padding: 16px 14px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .fk-flow .flow-node.accent {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .fk-flow .flow-node .fn-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 8px;
+  }
+  .fk-flow .flow-node.accent .fn-label { color: var(--accent); }
+  .fk-flow .flow-node .fn-content {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  .fk-flow .flow-node.accent .fn-content { color: var(--paper); }
+  .fk-flow .flow-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  @media (max-width: 980px) {
+    .fk-flow { grid-template-columns: 1fr; }
+    .fk-flow .flow-arrow { transform: rotate(90deg); padding: 4px 0; }
+  }
+
+  /* 官方资源卡片 */
+  .refs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+  }
+  .ref-card {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 18px 20px;
+    text-decoration: none;
+    color: var(--ink);
+    transition: all 0.18s ease;
+    display: block;
+    position: relative;
+  }
+  .ref-card::after {
+    content: '↗';
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    font-size: 16px;
+    color: var(--ink-mute);
+    transition: color 0.18s ease, transform 0.2s ease;
+  }
+  .ref-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+  .ref-card:hover::after {
+    color: var(--accent);
+    transform: translate(2px, -2px);
+  }
+  .ref-card .rc-source {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .ref-card .rc-title {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--ink);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .ref-card .rc-url {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    word-break: break-all;
+  }
+
+
+
+  /* ============== §01 — 没 MCP vs 装 MCP · SVG 对比 ============== */
+  .mcp-vs-stage {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+  @media (max-width: 880px) { .mcp-vs-stage { grid-template-columns: 1fr; } }
+  .mcp-vs-card {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 26px 26px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .mcp-vs-card.has-mcp {
+    border-color: var(--accent);
+  }
+  .mcp-vs-card.has-mcp::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--accent);
+  }
+  .mcp-vs-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 12px;
+  }
+  .mcp-vs-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+  .mcp-vs-card.has-mcp .mcp-vs-tag { color: var(--accent); }
+  .mcp-vs-title {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .mcp-vs-title .em {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    color: var(--accent);
+    font-weight: 500;
+    font-style: normal;
+  }
+  .mcp-vs-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    letter-spacing: 0.04em;
+    margin-bottom: 14px;
+  }
+  .mcp-vs-svg {
+    width: 100%;
+    height: 340px;
+    display: block;
+  }
+  .mcp-vs-foot {
+    margin-top: 8px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    text-align: center;
+  }
+  .mcp-vs-foot strong { color: var(--ink); font-weight: 700; }
+  .mcp-vs-card.has-mcp .mcp-vs-foot { border-top-color: var(--accent-soft); }
+
+  /* SVG inner: tentacles + tools */
+  .mcp-vs-svg .vs-tentacle {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-dasharray: 4 5;
+    animation: tentacleWave 3s ease-in-out infinite;
+  }
+  .mcp-vs-svg .vs-tentacle.t2 { animation-delay: 0.4s; }
+  .mcp-vs-svg .vs-tentacle.t3 { animation-delay: 0.8s; }
+  .mcp-vs-svg .vs-tentacle.t4 { animation-delay: 1.2s; }
+  .mcp-vs-svg .vs-tentacle.t5 { animation-delay: 1.6s; }
+  @keyframes tentacleWave {
+    0%, 100% { stroke-dashoffset: 0; opacity: 0.7; }
+    50%      { stroke-dashoffset: -18; opacity: 1; }
+  }
+  .mcp-vs-svg .vs-tool-box {
+    fill: var(--paper);
+    stroke: var(--accent);
+    stroke-width: 1.5;
+  }
+  .mcp-vs-svg .vs-tool-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    fill: var(--ink);
+  }
+  .mcp-vs-svg .vs-tool-emoji {
+    font-size: 18px;
+  }
+  .mcp-vs-svg .vs-core-empty {
+    fill: var(--ink);
+    stroke: var(--ink);
+  }
+  .mcp-vs-svg .vs-core-mcp {
+    fill: var(--accent);
+    stroke: var(--accent);
+  }
+  .mcp-vs-svg .vs-core-text {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 700;
+    fill: var(--paper);
+  }
+  .mcp-vs-svg .vs-input-dashed {
+    fill: none;
+    stroke: var(--ink-mute);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 4;
+  }
+  .mcp-vs-svg .vs-input-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    fill: var(--ink-mute);
+    letter-spacing: 0.04em;
+  }
+  .mcp-vs-svg .vs-pillar {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    fill: var(--ink);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  /* ============== §02 — 协议 4 角色 + 动态数据包流 ============== */
+  .mcp-flow-stage {
+    margin: 30px 0 8px;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 32px 28px 26px;
+    position: relative;
+    overflow: hidden;
+  }
+  .mcp-flow-stage::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--accent);
+  }
+  .protocol-flow {
+    width: 100%;
+    height: 200px;
+    display: block;
+  }
+  .protocol-flow .pf-path {
+    stroke: var(--line);
+    stroke-width: 2;
+    fill: none;
+    stroke-dasharray: 3 4;
+  }
+  .protocol-flow .pf-node-rect {
+    fill: var(--paper);
+    stroke: var(--ink);
+    stroke-width: 2;
+  }
+  .protocol-flow .pf-node-rect.is-accent {
+    fill: var(--ink);
+    stroke: var(--ink);
+  }
+  .protocol-flow .pf-node-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    fill: var(--ink);
+    letter-spacing: 0.04em;
+  }
+  .protocol-flow .pf-node-label.on-dark {
+    fill: var(--paper);
+  }
+  .protocol-flow .pf-node-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    fill: var(--ink-mute);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .protocol-flow .pf-node-tag.is-accent {
+    fill: var(--accent);
+  }
+  .protocol-flow .pf-packet {
+    fill: var(--accent);
+    filter: drop-shadow(0 0 6px rgba(255,77,46,0.5));
+  }
+  .protocol-flow .pf-packet.is-resp {
+    fill: var(--ink);
+    filter: drop-shadow(0 0 6px rgba(22,22,29,0.35));
+  }
+  .protocol-flow .pf-arrow-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    fill: var(--ink-soft);
+    letter-spacing: 0.06em;
+  }
+  .protocol-flow .pf-arrow-label.is-resp { fill: var(--ink-mute); }
+
+  /* 协议下方细节：4 节点说明 */
+  .pf-detail-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px dashed var(--line);
+  }
+  @media (max-width: 880px) { .pf-detail-row { grid-template-columns: 1fr 1fr; } }
+  .pf-detail-cell {
+    text-align: center;
+  }
+  .pf-detail-cell .pf-d-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    color: var(--ink-mute);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .pf-detail-cell .pf-d-name {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .pf-detail-cell .pf-d-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  /* ============== §03 — 远程 vs 本地 · SVG 对照 ============== */
+  .mcp-install-stage {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+  @media (max-width: 880px) { .mcp-install-stage { grid-template-columns: 1fr; } }
+  .mcp-install-card {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 26px 26px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .mcp-install-card.is-remote {
+    border-color: var(--accent);
+  }
+  .mcp-install-card.is-remote::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--accent);
+  }
+  .mcp-install-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 12px;
+  }
+  .mcp-install-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+  }
+  .mcp-install-card.is-remote .mcp-install-tag {
+    color: var(--accent);
+  }
+  .mcp-install-title {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .mcp-install-title .em {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    color: var(--accent);
+    font-weight: 500;
+    font-style: normal;
+  }
+  .mcp-install-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    letter-spacing: 0.04em;
+    margin-bottom: 14px;
+  }
+  .mcp-install-svg {
+    width: 100%;
+    height: 260px;
+    display: block;
+  }
+  .mcp-install-svg .mi-shape {
+    fill: var(--paper);
+    stroke: var(--ink);
+    stroke-width: 2;
+  }
+  .mcp-install-svg .mi-shape.is-accent {
+    stroke: var(--accent);
+  }
+  .mcp-install-svg .mi-line {
+    stroke: var(--ink);
+    stroke-width: 2;
+    fill: none;
+  }
+  .mcp-install-svg .mi-line.is-accent {
+    stroke: var(--accent);
+  }
+  .mcp-install-svg .mi-line.is-dashed {
+    stroke-dasharray: 4 4;
+    stroke: var(--ink-mute);
+  }
+  .mcp-install-svg .mi-pill {
+    fill: var(--accent-soft);
+    stroke: var(--accent);
+    stroke-width: 1.5;
+  }
+  .mcp-install-svg .mi-pill.is-mute {
+    fill: var(--bg-2);
+    stroke: var(--line);
+  }
+  .mcp-install-svg .mi-pill-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    fill: var(--accent);
+    letter-spacing: 0.04em;
+  }
+  .mcp-install-svg .mi-pill-text.is-mute {
+    fill: var(--ink-soft);
+  }
+  .mcp-install-svg .mi-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    fill: var(--ink);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .mcp-install-svg .mi-sublabel {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    fill: var(--ink-mute);
+    letter-spacing: 0.08em;
+  }
+  .mcp-install-svg .mi-ai-circle {
+    fill: var(--ink);
+    stroke: var(--ink);
+  }
+  .mcp-install-svg .mi-ai-text {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 700;
+    fill: var(--paper);
+    font-size: 13px;
+  }
+  .mcp-install-svg .mi-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+  .mcp-install-svg .mi-badge.is-yes {
+    fill: var(--accent);
+  }
+  .mcp-install-svg .mi-badge.is-meh {
+    fill: var(--ink-mute);
+  }
+  .mcp-install-foot {
+    margin-top: 12px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+  .mcp-install-foot .mi-foot-text {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    margin: 0 0 10px;
+  }
+  .mcp-install-foot .mi-foot-text strong { color: var(--ink); font-weight: 700; }
+  .mcp-install-foot pre.mi-pre {
+    margin: 0;
+    background: #1f1f29;
+    color: #c3e88d;
+    padding: 10px 14px;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    line-height: 1.55;
+    overflow-x: auto;
+  }
+  .mcp-install-card.is-remote .mcp-install-foot { border-top-color: var(--accent-soft); }
+
+  /* ============== §05 — Cheat 信息图 SVG ============== */
+  .cheat-mini-svg {
+    width: 100%;
+    height: 180px;
+    display: block;
+    margin: 6px 0 12px;
+  }
+  .cheat-mini-svg .cm-node-rect {
+    fill: var(--paper);
+    stroke: var(--ink);
+    stroke-width: 1.5;
+  }
+  .cheat-mini-svg .cm-node-rect.is-accent {
+    fill: var(--ink);
+    stroke: var(--ink);
+  }
+  .cheat-mini-svg .cm-node-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    fill: var(--ink);
+  }
+  .cheat-mini-svg .cm-node-text.on-dark { fill: var(--paper); }
+  .cheat-mini-svg .cm-arrow {
+    stroke: var(--ink-mute);
+    stroke-width: 1.5;
+    fill: none;
+  }
+  .cheat-mini-svg .cm-packet {
+    fill: var(--accent);
+  }
+  .cheat-mini-svg .cm-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    fill: var(--ink-mute);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* 速查 02: 3 个必装 MCP icon 卡 */
+  .cheat-mcp-trio {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 6px 0 12px;
+  }
+  .cheat-mcp-icon {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 6px 10px;
+    text-align: center;
+  }
+  .cheat-mcp-icon svg {
+    width: 36px;
+    height: 36px;
+    display: block;
+    margin: 0 auto 6px;
+  }
+  .cheat-mcp-icon .cmi-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+  .cheat-mcp-icon .cmi-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-mute);
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+
+  /* 速查 03: 5 步流程图 SVG */
+  .cheat-flow-svg {
+    width: 100%;
+    height: 240px;
+    display: block;
+    margin: 6px 0 12px;
+  }
+  .cheat-flow-svg .cf-step-circle {
+    fill: var(--accent);
+    stroke: var(--accent);
+  }
+  .cheat-flow-svg .cf-step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    fill: var(--paper);
+  }
+  .cheat-flow-svg .cf-step-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    fill: var(--ink);
+    font-weight: 600;
+  }
+  .cheat-flow-svg .cf-step-text code {
+    font-weight: 700;
+  }
+  .cheat-flow-svg .cf-step-arrow {
+    stroke: var(--accent);
+    stroke-width: 1.5;
+    fill: none;
+    stroke-dasharray: 3 3;
+  }
+
+  /* ============== §04 — MCP Assembly Lab ============== */
+  .ma-stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 16px;
+    margin: 24px 0 8px;
+  }
+  .ma-brain-pane {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .ma-candidates { grid-column: 1; grid-row: 2; }
+  .ma-abilities  { grid-column: 2; grid-row: 2; }
+  @media (max-width: 720px) {
+    .ma-stage { grid-template-columns: 1fr; }
+    .ma-candidates, .ma-abilities { grid-column: 1; }
+  }
+  .ma-brain-pane .ma-brain-stage {
+    min-height: 280px;
+  }
+
+  .ma-pane {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 22px 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  .ma-pane-head {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--line);
+  }
+
+  /* 候选 MCP */
+  .ma-mcp-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ma-mcp {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--bg);
+    border: 1.5px solid var(--line);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-align: left;
+    font-family: inherit;
+    color: inherit;
+    width: 100%;
+  }
+  .ma-mcp:hover {
+    border-color: var(--ink);
+    transform: translateX(2px);
+  }
+  .ma-mcp.is-on {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+  .ma-mcp-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    width: 30px;
+    text-align: center;
+  }
+  .ma-mcp-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .ma-mcp-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+  .ma-mcp.is-on .ma-mcp-name { color: var(--accent); }
+  .ma-mcp-desc {
+    font-size: 11px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-top: 2px;
+  }
+  .ma-mcp-toggle {
+    width: 22px; height: 22px;
+    border-radius: 5px;
+    border: 1.5px solid var(--ink-mute);
+    background: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink-mute);
+    flex-shrink: 0;
+    transition: all 0.18s ease;
+  }
+  .ma-mcp.is-on .ma-mcp-toggle {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--paper);
+  }
+
+  /* presets */
+  .ma-presets {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .ma-preset {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+  }
+  .ma-preset:hover {
+    border-color: var(--ink);
+    background: var(--bg-2);
+  }
+  .ma-preset.ma-preset-clear {
+    color: var(--ink-mute);
+    border-color: var(--line);
+    margin-top: 4px;
+  }
+
+  /* AI 大脑 */
+  .ma-brain-stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+    position: relative;
+  }
+  .ma-orbit {
+    position: relative;
+    width: 260px;
+    height: 260px;
+  }
+  .ma-core {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(22,22,29,0.18);
+    z-index: 2;
+  }
+  .ma-core-label {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    font-size: 36px;
+    font-weight: 900;
+    font-style: italic;
+    line-height: 1;
+  }
+  .ma-core-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: rgba(255,255,255,0.6);
+    margin-top: 4px;
+    letter-spacing: 0.08em;
+  }
+  /* 装上的 MCP 围绕大脑 */
+  .ma-orbit-mcp {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 4px 14px rgba(255,77,46,0.32);
+    animation: orbitIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @keyframes orbitIn {
+    from { opacity: 0; transform: scale(0.4); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  /* 连接线 */
+  .ma-orbit-line {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 100px;
+    height: 2px;
+    background: var(--accent);
+    transform-origin: 0 50%;
+    opacity: 0.5;
+  }
+
+  .ma-status {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    text-align: center;
+  }
+  .ma-status strong {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .ma-progress {
+    margin-top: 8px;
+    height: 4px;
+    background: var(--bg-2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .ma-progress-bar {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  /* 能力列表 */
+  .ma-ability-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .ma-ability {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    font-size: 12.5px;
+    color: var(--ink-mute);
+    line-height: 1.4;
+    border-radius: 4px;
+    transition: all 0.25s ease;
+  }
+  .ma-ability.is-on {
+    color: var(--ink);
+    background: rgba(255,77,46,0.08);
+  }
+  .ma-ability-icon {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    border: 1.5px solid var(--line);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--ink-mute);
+    font-weight: 700;
+    transition: all 0.25s ease;
+  }
+  .ma-ability.is-on .ma-ability-icon {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--paper);
+  }
+  .ma-ability-icon::before { content: '✗'; }
+  .ma-ability.is-on .ma-ability-icon::before { content: '✓'; }
+
+
+  /* === footer byline === */
+  .byline-group, .byline-wrap.byline-group { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+  .byline-group .byline { display: flex; gap: 16px; align-items: flex-start; margin: 0; min-width: 0; }
+  .byline-group .avatar { width: 56px; height: 56px; flex-shrink: 0; }
+  .byline-group .byline-meta { min-width: 0; }
+  .byline-group .byline-name { font-size: 18px; }
+  .byline-group .byline-tag { font-size: 12px; line-height: 1.55; }
+  .byline-group .byline-contact { margin-top: 10px; padding-top: 10px; display: flex; align-items: flex-start; gap: 10px; flex-wrap: nowrap; }
+  .byline-group .byline-contact .contact-label { padding: 1px 6px; font-size: 10px; align-self: flex-start; }
+  .byline-group .byline-contact .contact-id { padding: 2px 8px; font-size: 12px; align-self: flex-start; }
+  .byline-group .byline-contact .contact-hint { font-size: 11px; line-height: 1.5; }
+  .byline-contact-text { display: flex; flex-direction: column; gap: 5px; min-width: 0; flex: 1; padding-top: 1px; }
+  .byline-contact .qr-card { width: 68px; height: 68px; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; flex-shrink: 0; position: relative; background: #fff; }
+  .byline-contact .qr-card.qr-empty { border-style: dashed; background: var(--accent-soft); }
+  .byline-contact .qr-card.qr-empty::after { content: "二维码\A 待补充"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; white-space: pre-line; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--ink-mute); letter-spacing: 0.05em; line-height: 1.5; }
+  .byline-contact .qr-card img { width: 100%; height: 100%; display: block; object-fit: cover; }
+  @media (max-width: 700px) {
+    .byline-group, .byline-wrap.byline-group { grid-template-columns: 1fr; gap: 18px; }
+    .byline-group .byline + .byline { padding-top: 18px; border-top: 1px dashed var(--line); }
+  }
+
+  /* §03 MCP types · 4 类横评 */
+  .mcp-types-grid {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 1000px) { .mcp-types-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px)  { .mcp-types-grid { grid-template-columns: 1fr; } }
+  .mcp-type-card {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s;
+  }
+  .mcp-type-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(22,22,29,0.06);
+  }
+  .mcp-type-card.lvl-low  { border-color: var(--green); }
+  .mcp-type-card.lvl-midlow { border-color: #5b9a4a; }
+  .mcp-type-card.lvl-mid  { border-color: var(--yellow); }
+  .mcp-type-card.lvl-high { border-color: var(--accent); }
+
+  .mcp-type-head {
+    padding: 16px 18px 14px;
+    border-bottom: 1px dashed rgba(0,0,0,0.1);
+  }
+  .mcp-type-card.lvl-low  .mcp-type-head { background: var(--green-soft); }
+  .mcp-type-card.lvl-midlow .mcp-type-head { background: #e3f0d8; }
+  .mcp-type-card.lvl-mid  .mcp-type-head { background: #fff5d4; }
+  .mcp-type-card.lvl-high .mcp-type-head { background: var(--accent-soft); }
+  .mcp-type-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 2px 8px;
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 100px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .mcp-type-num {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    font-style: italic;
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--ink-mute);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .mcp-type-card.lvl-low  .mcp-type-num { color: var(--green); }
+  .mcp-type-card.lvl-midlow .mcp-type-num { color: #5b9a4a; }
+  .mcp-type-card.lvl-mid  .mcp-type-num { color: #c5970b; }
+  .mcp-type-card.lvl-high .mcp-type-num { color: var(--accent); }
+  .mcp-type-name {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.25;
+  }
+  .mcp-type-examples {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-mute);
+    margin-top: 6px;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+  }
+
+  .mcp-type-body {
+    padding: 14px 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+  }
+  .mcp-type-row {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 10px;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  .mcp-row-k {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    color: var(--ink-mute);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding-top: 2px;
+    font-weight: 600;
+  }
+  .mcp-row-v { color: var(--ink-soft); }
+  .mcp-row-v strong { color: var(--ink); font-weight: 600; }
+
+  .mcp-type-foot {
+    padding: 10px 16px 12px;
+    background: var(--bg);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    border-top: 1px dashed var(--line);
+  }
+  .mcp-type-foot .when {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    margin-right: 6px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .mcp-type-card.lvl-low  .mcp-type-foot .when { color: var(--green); }
+  .mcp-type-card.lvl-midlow .mcp-type-foot .when { color: #5b9a4a; }
+  .mcp-type-card.lvl-mid  .mcp-type-foot .when { color: #c5970b; }
+  .mcp-type-card.lvl-high .mcp-type-foot .when { color: var(--accent); }
+
+  
+  /* lesbian-flag-5color-band — topbar 底部 2px 5 色细 band */
+  .topbar {
+    background-image: linear-gradient(to right, #D52D00 0 14.28%, #EF7627 14.28% 28.57%, #FF9A56 28.57% 42.86%, #FFFFFF 42.86% 57.14%, #D162A4 57.14% 71.43%, #B55690 71.43% 85.71%, #EF7627 85.71% 100%) !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 2px !important;
+    background-position: bottom !important;
+  }
+
+/* === portfolio-inspired 入场 + hover 动效(米色基调统一)=== */
+@keyframes p-fade-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes p-fade-down { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes p-scale-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+
+.topbar { animation: p-fade-down 0.7s cubic-bezier(0.16,1,0.3,1) backwards; }
+.hero, header.hero { animation: p-fade-up 0.85s cubic-bezier(0.16,1,0.3,1) 0.15s backwards; }
+.section-head { animation: p-fade-up 0.8s cubic-bezier(0.16,1,0.3,1) backwards; }
+
+.rm-cell, .next-post, .j-node, .vol-tab, .hero-film-card, .nav-links a,
+.track-tab, .ld, .jp-filter, .hero-cinema-link {
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s ease-out, color 0.2s, background-color 0.2s;
+}
+.rm-cell:hover, .next-post:hover, .hero-film-card:hover, .vol-tab:hover {
+  transform: translateY(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar, .hero, .section-head { animation: none !important; }
+  .rm-cell, .next-post, .j-node, .vol-tab, .hero-film-card,
+  .nav-links a, .track-tab, .ld, .jp-filter, .hero-cinema-link {
+    transition: none !important;
+  }
+  .rm-cell:hover, .next-post:hover, .hero-film-card:hover, .vol-tab:hover {
+    transform: none !important;
+  }
+}
+
+  /* 字体分工:正文=阿里普惠体, 标题=阿里妈妈数黑体 */
+  html, body, p, span, div, a, button, input, textarea, select, label, li, td, th,
+  .lede, .desc, .section-sub, .hi-desc, .nav-links, .demo-label, .brand, .tier {
+    font-family: 'Alibaba PuHuiTi 3.0', '阿里巴巴普惠体 3.0', '阿里巴巴普惠体',
+                 system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif !important;
+  }
+  h1, h2, h3, h4, .display-en, .display-cn, .hi-title, .hc-title,
+  .section-title, .sc-mid, .si-title, .pv-title, .tv-title, .k-title,
+  .ch-title, .season-title, .ep-title, .nb-h,
+  [class*="-title"], [class$="-title"] {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', sans-serif !important;
+    font-style: normal !important;
+    font-weight: 700 !important;
+  }
+
+  /* footer 紧凑 + 白底 */
+  footer {
+    background: #ffffff !important;
+    padding: 32px 0 !important;
+    border-top: 1px solid #e4e4e7 !important;
+  }
+  footer .wrap { padding: 0 32px !important; }
+  footer .byline { gap: 14px !important; align-items: center !important; }
+  footer .avatar { width: 56px !important; height: 56px !important; }
+  footer .byline-name { font-size: 18px !important; margin: 4px 0 !important; line-height: 1.3 !important; }
+  footer .byline-tag { font-size: 13px !important; margin: 2px 0 0 !important; line-height: 1.4 !important; }
+  footer .byline-label { font-size: 10px !important; letter-spacing: 0.14em !important; }
+  footer .footer-meta { font-size: 11px !important; margin-top: 18px !important; padding-top: 18px !important; }
+
+  /* .em 和 .display-cn 用数黑 + 橙色 */
+  .em, .display-cn {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', sans-serif !important;
+    color: #EF7627 !important;
+  }
+
+  /* manifesto 文字填满 */
+  .manifesto p { max-width: 100% !important; }
+
+  /* roadmap 居中 + 缩小底部间距 */
+  .journey-svg {
+    transform-origin: 50% 0% !important;
+  }
+  section#roadmap, #roadmap {
+    padding-bottom: 24px !important;
+  }
+  .vol-panel { padding-bottom: 0 !important; margin-bottom: 0 !important; }
+
+  /* 子页清掉冗余引导文案 */
+  .lede, .section-sub { display: none !important; }
+
+  /* footer 文案统一左对齐 */
+  footer .footer-meta, .footer-meta {
+    text-align: left !important;
+    justify-content: flex-start !important;
+  }
+
+  /* 内页 hero 标题用黑色,不要橙色 */
+  header.hero h1 .em,
+  header.hero h1 .display-cn,
+  header.hero h1 .display-en,
+  header.hero h1 .x {
+    color: var(--ink, #0a0a0a) !important;
+  }
+
+  /* signature 渐变 · 7 色个人标识 */
+  :root {
+    --sig-grad: linear-gradient(90deg,
+      #D52D00 0%, #EF7627 18%, #FF9A56 33%,
+      #FFFFFF 50%,
+      #D162A4 67%, #B55690 82%, #A30262 100%);
+  }
+  /* 1. 站标 ● 改渐变签名球 */
+  .brand .dot {
+    background: var(--sig-grad) !important;
+    width: 10px !important;
+    height: 10px !important;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.04) !important;
+  }
+  /* 3. 顶部阅读进度条 · scroll-driven */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--sig-grad);
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    z-index: 9999;
+    pointer-events: none;
+    animation: sig-progress linear;
+    animation-timeline: scroll(root);
+  }
+  @keyframes sig-progress { to { transform: scaleX(1); } }
+  /* Safari fallback:不支持 scroll-timeline 时藏起来,不残留 */
+  @supports not (animation-timeline: scroll()) {
+    body::before { display: none; }
+  }
+
+  /* 去掉 topbar 底部 5 色 band(改用顶部进度条) */
+  .topbar {
+    background-image: none !important;
+  }
+
+  /* 已读环 + 进度条用 signature 渐变 */
+  .j-node.read .j-node-circle {
+    stroke: url(#sig-grad-svg) !important;
+    stroke-width: 2.5 !important;
+  }
+  .book-progress-fill {
+    background: var(--sig-grad) !important;
+  }
+
+  /* footer 右下角微信二维码 */
+  footer .wrap {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-rows: auto auto !important;
+    column-gap: 32px !important;
+    row-gap: 16px !important;
+    align-items: end !important;
+  }
+  footer .byline-group { grid-column: 1; grid-row: 1; }
+  footer .footer-meta { grid-column: 1; grid-row: 2; }
+  footer .footer-wechat {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    align-self: center;
+  }
+  .footer-wechat .wechat-qr {
+    width: 92px;
+    height: 92px;
+    border-radius: 6px;
+    border: 1px solid var(--line, #e4e4e7);
+    background: #fff;
+    display: block;
+  }
+  .footer-wechat .wechat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: var(--ink-mute, #6b6b75);
+    font-weight: 700;
+    text-align: center;
+  }
+  .footer-wechat .wechat-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink, #0a0a0a);
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  /* topbar 中间课程 CTA */
+  .course-cta {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 6px 14px !important;
+    border: 1px solid var(--line, #e4e4e7) !important;
+    border-radius: 100px !important;
+    font-family: 'Alibaba PuHuiTi 3.0', 'PingFang SC', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: var(--ink, #0a0a0a) !important;
+    text-decoration: none !important;
+    background: #fff !important;
+    transition: all 0.2s ease !important;
+    letter-spacing: 0.02em !important;
+    white-space: nowrap !important;
+  }
+  .course-cta:hover {
+    border-color: var(--accent, #EF7627) !important;
+    color: var(--accent, #EF7627) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(239,118,39,0.12) !important;
+  }
+  .course-cta .cta-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--sig-grad, #EF7627);
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .course-cta .cta-arrow {
+    font-size: 11px;
+    opacity: 0.55;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  .course-cta:hover .cta-arrow {
+    transform: translate(2px, -2px);
+    opacity: 1;
+  }
+  @media (max-width: 760px) {
+    .course-cta { font-size: 11px !important; padding: 5px 10px !important; }
+    .course-cta .cta-text { display: none; }
+  }
+
+  /* 去掉右上角 HOME tab(只一个 tab,没用) */
+  nav.vol-tabs { display: none !important; }
+
+  /* 修 .wf-btn.primary hover 被错误覆盖背景的问题 */
+  .wf-btn.primary:hover:not(:disabled) {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-color: var(--accent) !important;
+    filter: brightness(0.92);
+  }
+
+  /* 隐藏入口与路线图 */
+  #tracks, .track-switch, #x_alt-roadmap { display: none !important; }
+
+  /* 主页 manifesto → roadmap 之间补回视觉间隔 */
+  #roadmap {
+    position: relative;
+    margin-top: 56px !important;
+    padding-top: 88px !important;
+  }
+  #roadmap::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 1px;
+    background: var(--sig-grad, #EF7627);
+    opacity: 0.7;
+  }
+
+  /* footer 内的 REFERENCES 引用块隐藏(全站 footer 一致) */
+  footer .label, footer .source-list { display: none !important; }
+
+  /* topbar 三栏严格对齐:brand 左 / CTA 中 / nav 右 */
+  .topbar-inner {
+    display: grid !important;
+    grid-template-columns: 1fr auto 1fr !important;
+    align-items: center !important;
+    gap: 16px !important;
+  }
+  .topbar-inner .brand,
+  .topbar-inner .brand-block { justify-self: start; }
+  .topbar-inner .course-cta { justify-self: center; }
+  .topbar-inner .nav-links,
+  .topbar-inner nav.nav-links,
+  .topbar-inner nav.vol-tabs { justify-self: end; }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand-block"><a href="index.html#vol-3" class="brand"><span class="brand-arrow">←</span><span class="dot"></span>AI LABBOOK</a><span class="brand-sep">/</span><span class="brand-current">MCP · Model Context Protocol</span></div>
+    <a class="course-cta" href="https://xhslink.com/m/92BZZ1bF3xv" target="_blank" rel="noopener">
+      <span class="cta-dot"></span>
+      <span class="cta-text">给设计师的零基础 AI 课</span>
+      <span class="cta-arrow">↗</span>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html#vol-3" data-rm-open>路线图</a>
+    </nav>
+  </div>
+</div>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-meta">
+      <span class="pill fill">Q1 · Code × Design</span>
+      <span class="pill">阅读 10 分钟</span>
+      <span class="pill">5 张可视图 + 装配台</span>
+      <span class="label">不写代码也能装上</span>
+    </div>
+    <div class="hero-grid">
+      <div>
+        <h1>
+          <span class="display-cn">MCP 不是新 AI，</span><br>
+          <span class="display-cn">是 AI 的</span><span class="em">USB 接口</span><span class="display-cn">。</span>
+        </h1>
+        <p class="lede">
+          MCP（Model Context Protocol）是<strong>让 AI 接外部工具的协议</strong>。<br>
+          装上 <code class="mono" style="font-size:16px;background:var(--accent-soft);padding:2px 6px;border-radius:3px;">Figma MCP</code> AI 就能"看到"你的设计稿，<br>
+          装上 <code class="mono" style="font-size:16px;background:var(--accent-soft);padding:2px 6px;border-radius:3px;">Chrome MCP</code> AI 就能"看到"你的真实网站。
+        </p>
+      </div>
+      <div class="hero-side">
+        <div class="row"><span class="k">本页讲什么</span><span class="v">MCP 是什么 / 怎么用</span></div>
+        <div class="row"><span class="k">含拆解</span><span class="v">协议 + 角色 + 接入方式</span></div>
+        <div class="row"><span class="k">面向</span><span class="v">用 Claude / Cursor 但没装过 MCP 的设计师</span></div>
+        <div class="row"><span class="k">前置知识</span><span class="v">能跑 npm 即可</span></div>
+      </div></div>
+  </div>
+</header>
+
+<!-- §01 -->
+<section id="without-mcp">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>01</strong> / 对比</div>
+        <h2 class="section-title">没 MCP · AI 是<span class="em">聋哑外宾</span><br>装上 MCP · AI <span class="em">长出手</span></h2>
+      </div>
+      <p class="section-sub">
+        左边：AI 只能用嘴说，外面世界全够不着。<br>
+        右边：装上 MCP，AI 伸出触手，接 N 种外部工具。
+      </p>
+    </div>
+
+    <div class="mcp-vs-stage">
+      <!-- 左：没装 MCP -->
+      <div class="mcp-vs-card">
+        <div class="mcp-vs-head">
+          <span class="mcp-vs-tag">no · mcp</span>
+        </div>
+        <div class="mcp-vs-title">没 MCP · <span class="em">AI 是聋哑外宾</span></div>
+        <div class="mcp-vs-sub">isolated · no hands · no tools</div>
+        <svg class="mcp-vs-svg" viewBox="0 0 340 340" preserveAspectRatio="xMidYMid meet">
+          <!-- 顶部：用户截图虚线箭头 -->
+          <text class="vs-input-label" x="170" y="36" text-anchor="middle">user input · 一张截图</text>
+          <path class="vs-input-dashed" d="M 170 50 L 170 116"/>
+          <polyline points="164,110 170,118 176,110" fill="none" stroke="#8a8a92" stroke-width="1.5" stroke-linecap="round"/>
+          <!-- 中心 AI 圆（深色填充） -->
+          <circle class="vs-core-empty" cx="170" cy="170" r="44"/>
+          <text class="vs-core-text" x="170" y="168" text-anchor="middle" font-size="18">AI</text>
+          <text x="170" y="184" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#faf7f0" opacity="0.6">no tools</text>
+          <!-- 周围空旷：4 个"够不着"的灰色虚影 -->
+          <g opacity="0.32">
+            <rect x="34" y="258" width="72" height="32" rx="5" fill="none" stroke="#8a8a92" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <text x="70" y="278" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" fill="#8a8a92">Figma</text>
+            <text x="70" y="306" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#8a8a92" letter-spacing="0.1em">够不着</text>
+
+            <rect x="134" y="258" width="72" height="32" rx="5" fill="none" stroke="#8a8a92" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <text x="170" y="278" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" fill="#8a8a92">Chrome</text>
+            <text x="170" y="306" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#8a8a92" letter-spacing="0.1em">够不着</text>
+
+            <rect x="234" y="258" width="72" height="32" rx="5" fill="none" stroke="#8a8a92" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <text x="270" y="278" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" fill="#8a8a92">GitHub</text>
+            <text x="270" y="306" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#8a8a92" letter-spacing="0.1em">够不着</text>
+          </g>
+          <!-- 左右两侧标语 -->
+          <text class="vs-pillar" x="22" y="170" text-anchor="start">只能用嘴说</text>
+          <text class="vs-pillar" x="318" y="170" text-anchor="end" fill="#8a8a92">没有手</text>
+        </svg>
+        <div class="mcp-vs-foot">
+          <strong>你给截图 → AI 看 → 嘴上回答</strong><br>
+          Figma / Chrome / GitHub 全在外面 · 摸不着
+        </div>
+      </div>
+
+      <!-- 右：装上 MCP -->
+      <div class="mcp-vs-card has-mcp">
+        <div class="mcp-vs-head">
+          <span class="mcp-vs-tag">with · mcp</span>
+        </div>
+        <div class="mcp-vs-title">装 MCP · <span class="em">AI 长出 N 只手</span></div>
+        <div class="mcp-vs-sub">tentacles → figma / chrome / playwright / github / fs</div>
+        <svg class="mcp-vs-svg" viewBox="0 0 340 340" preserveAspectRatio="xMidYMid meet">
+          <!-- 中心 AI 圆（橙色填充） -->
+          <circle class="vs-core-mcp" cx="170" cy="170" r="42"/>
+          <text class="vs-core-text" x="170" y="166" text-anchor="middle" font-size="16">AI</text>
+          <text x="170" y="182" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#faf7f0" opacity="0.85" letter-spacing="0.08em">+ MCP</text>
+
+          <!-- 5 个触手 + 工具 -->
+          <!-- 工具 1: Figma · 左上 -->
+          <path class="vs-tentacle t1" d="M 138 140 Q 95 110 60 70"/>
+          <rect class="vs-tool-box" x="6" y="46" width="98" height="34" rx="6"/>
+          <text x="22" y="68" class="vs-tool-emoji" font-size="16">🎨</text>
+          <text x="96" y="67" class="vs-tool-text" text-anchor="end">Figma</text>
+
+          <!-- 工具 2: Chrome · 右上 -->
+          <path class="vs-tentacle t2" d="M 202 140 Q 245 110 280 70"/>
+          <rect class="vs-tool-box" x="236" y="46" width="98" height="34" rx="6"/>
+          <text x="252" y="68" class="vs-tool-emoji" font-size="16">🌐</text>
+          <text x="326" y="67" class="vs-tool-text" text-anchor="end">Chrome</text>
+
+          <!-- 工具 3: Playwright · 右下 -->
+          <path class="vs-tentacle t3" d="M 206 192 Q 250 215 285 260"/>
+          <rect class="vs-tool-box" x="226" y="262" width="108" height="34" rx="6"/>
+          <text x="242" y="284" class="vs-tool-emoji" font-size="16">🎭</text>
+          <text x="326" y="283" class="vs-tool-text" text-anchor="end">Playwright</text>
+
+          <!-- 工具 4: Filesystem · 左下 -->
+          <path class="vs-tentacle t4" d="M 134 192 Q 90 215 55 260"/>
+          <rect class="vs-tool-box" x="6" y="262" width="108" height="34" rx="6"/>
+          <text x="22" y="284" class="vs-tool-emoji" font-size="16">📁</text>
+          <text x="106" y="283" class="vs-tool-text" text-anchor="end">Filesystem</text>
+
+          <!-- 工具 5: GitHub · 正下 -->
+          <path class="vs-tentacle t5" d="M 170 212 Q 170 272 170 308"/>
+          <rect class="vs-tool-box" x="120" y="308" width="100" height="26" rx="5"/>
+          <text x="134" y="326" class="vs-tool-emoji" font-size="14">🐙</text>
+          <text x="212" y="325" class="vs-tool-text" text-anchor="end">GitHub</text>
+        </svg>
+        <div class="mcp-vs-foot">
+          <strong>装一个 MCP server · 长一只手</strong><br>
+          AI 能动手 · 读写真实工具 · 不再靠你传话
+        </div>
+      </div>
+    </div>
+
+    <div class="hint-strip" style="margin-top:36px;">
+      <span class="hint-tag">所以</span>
+      <strong>MCP 就是 AI 的"手"</strong> —— 装一个 server，长一只手；
+      装 5 个 server，AI 同时摸到 Figma / Chrome / GitHub / 本地文件 / Playwright。
+    </div>
+  </div>
+</section>
+
+<!-- §02 -->
+<section id="mcp-anatomy">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>02</strong> / 协议</div>
+        <h2 class="section-title">MCP 协议<br><span class="em">4 角色 · 数据包来回流</span></h2>
+      </div>
+      <p class="section-sub">
+        MCP 是 Anthropic 2024 年发布的<strong>通信协议</strong>。
+        看 <span class="em">request 橙色包 →</span> 怎么从 client 流到 tool，<span class="em">response 黑色包 ←</span> 怎么流回来。
+      </p>
+    </div>
+
+    <div class="mcp-flow-stage">
+      <svg class="protocol-flow" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet">
+        <!-- 请求路径 (上方, 左到右) -->
+        <path id="flow-req-path" class="pf-path" d="M 130 78 H 670"/>
+        <!-- 响应路径 (下方, 右到左) -->
+        <path id="flow-resp-path" class="pf-path" d="M 670 122 H 130"/>
+
+        <!-- 4 个节点 (rect, viewBox 中心 100) -->
+        <!-- step 1 · client -->
+        <rect class="pf-node-rect" x="20" y="60" width="120" height="80" rx="8"/>
+        <text class="pf-node-tag" x="80" y="48" text-anchor="middle">step · 01</text>
+        <text class="pf-node-label" x="80" y="92" text-anchor="middle">AI 工具</text>
+        <text class="pf-node-label" x="80" y="108" text-anchor="middle" font-size="9.5" fill="#4a4a55">client</text>
+        <text x="80" y="124" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#8a8a92">Claude / Cursor</text>
+
+        <!-- step 2 · protocol -->
+        <rect class="pf-node-rect" x="226" y="60" width="120" height="80" rx="8"/>
+        <text class="pf-node-tag" x="286" y="48" text-anchor="middle">step · 02</text>
+        <text class="pf-node-label" x="286" y="92" text-anchor="middle">MCP 协议</text>
+        <text class="pf-node-label" x="286" y="108" text-anchor="middle" font-size="9.5" fill="#4a4a55">protocol</text>
+        <text x="286" y="124" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#8a8a92">JSON-RPC · stdio</text>
+
+        <!-- step 3 · server (accent, deep ink) -->
+        <rect class="pf-node-rect is-accent" x="432" y="60" width="120" height="80" rx="8"/>
+        <text class="pf-node-tag is-accent" x="492" y="48" text-anchor="middle">step · 03</text>
+        <text class="pf-node-label on-dark" x="492" y="92" text-anchor="middle">MCP Server</text>
+        <text class="pf-node-label on-dark" x="492" y="108" text-anchor="middle" font-size="9.5" opacity="0.7">server</text>
+        <text x="492" y="124" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#faf7f0" opacity="0.55">Figma · Chrome</text>
+
+        <!-- step 4 · external tool -->
+        <rect class="pf-node-rect" x="638" y="60" width="142" height="80" rx="8"/>
+        <text class="pf-node-tag" x="709" y="48" text-anchor="middle">step · 04</text>
+        <text class="pf-node-label" x="709" y="92" text-anchor="middle">外部工具</text>
+        <text class="pf-node-label" x="709" y="108" text-anchor="middle" font-size="9.5" fill="#4a4a55">tool</text>
+        <text x="709" y="124" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#8a8a92">Figma · GitHub · FS</text>
+
+        <!-- 流向标签 -->
+        <text class="pf-arrow-label" x="160" y="72" text-anchor="start">request →</text>
+        <text class="pf-arrow-label is-resp" x="640" y="138" text-anchor="end">← response</text>
+
+        <!-- 数据包：request (橙色, 左→右) -->
+        <circle class="pf-packet" r="7">
+          <animateMotion dur="3.2s" repeatCount="indefinite">
+            <mpath href="#flow-req-path"/>
+          </animateMotion>
+        </circle>
+        <circle class="pf-packet" r="5" opacity="0.6">
+          <animateMotion dur="3.2s" begin="-1.6s" repeatCount="indefinite">
+            <mpath href="#flow-req-path"/>
+          </animateMotion>
+        </circle>
+
+        <!-- 数据包：response (深色, 右→左) -->
+        <circle class="pf-packet is-resp" r="6">
+          <animateMotion dur="3.6s" begin="0.6s" repeatCount="indefinite">
+            <mpath href="#flow-resp-path"/>
+          </animateMotion>
+        </circle>
+      </svg>
+
+      <!-- 下方说明 -->
+      <div class="pf-detail-row">
+        <div class="pf-detail-cell">
+          <div class="pf-d-tag">client</div>
+          <div class="pf-d-name">AI 工具</div>
+          <div class="pf-d-sub">Claude Code<br>Cursor / Desktop</div>
+        </div>
+        <div class="pf-detail-cell">
+          <div class="pf-d-tag">protocol</div>
+          <div class="pf-d-name">MCP 协议</div>
+          <div class="pf-d-sub">JSON-RPC<br>stdio / HTTP</div>
+        </div>
+        <div class="pf-detail-cell">
+          <div class="pf-d-tag">server</div>
+          <div class="pf-d-name">MCP Server</div>
+          <div class="pf-d-sub">Figma / Chrome /<br>GitHub 等写的</div>
+        </div>
+        <div class="pf-detail-cell">
+          <div class="pf-d-tag">tool</div>
+          <div class="pf-d-name">外部工具</div>
+          <div class="pf-d-sub">真实在用的<br>Figma / 浏览器 / FS</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint-strip" style="margin-top:32px;">
+      <span class="hint-tag">关键</span>
+      <strong>AI 工具（client）只跟协议说话，不直接跟工具说话</strong>。
+      所以一份 MCP 协议能接 100 个 server / 100 种外部工具 ——
+      就像 USB 接口能接 100 种设备一样。
+    </div>
+  </div>
+</section>
+
+<!-- §03 MCP types · 4 类横评 -->
+<section id="mcp-types">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>03</strong> / 不只一种</div>
+        <h2 class="section-title">MCP 不只<br><span class="em">Figma</span> 那一种。</h2>
+      </div>
+      <p class="section-sub">
+        大家说"MCP"通常都在说 Figma MCP —— 其实是个<strong>协议家族</strong>。
+        4 类主流 MCP,<strong>能干啥 / 在哪儿干 / 多有侵入性</strong> 差别巨大。
+      </p>
+    </div>
+
+    <div class="hint-strip">
+      <span class="hint-tag">提示</span>下面 4 类按<strong>侵入性</strong>从低到高排 —— AI 能"碰到"的范围越来越大。
+    </div>
+
+    <div class="mcp-types-grid">
+      <div class="mcp-type-card lvl-low">
+        <div class="mcp-type-head">
+          <span class="mcp-type-chip">🟢 低侵入</span>
+          <div class="mcp-type-num">01</div>
+          <h3 class="mcp-type-name">设计资产读取</h3>
+          <div class="mcp-type-examples">Figma MCP · Sketch MCP</div>
+        </div>
+        <div class="mcp-type-body">
+          <div class="mcp-type-row"><span class="mcp-row-k">干嘛</span><span class="mcp-row-v">读你的<strong>设计稿 JSON</strong> · 图层 · 组件 · token</span></div>
+          <div class="mcp-type-row"><span class="mcp-row-k">范围</span><span class="mcp-row-v">只读 · <strong>不写不改</strong></span></div>
+          <div class="mcp-type-row"><span class="mcp-row-k">能动</span><span class="mcp-row-v">看不见 / 不点 / 安全</span></div>
+        </div>
+        <div class="mcp-type-foot">
+          <span class="when">用在</span>想让 AI 还原设计稿成代码
+        </div>
+      </div>
+
+      <div class="mcp-type-card lvl-midlow">
+        <div class="mcp-type-head">
+          <span class="mcp-type-chip">🟢 低-中侵入</span>
+          <div class="mcp-type-num">02</div>
+          <h3 class="mcp-type-name">工程 · 代码 / 文件</h3>
+          <div class="mcp-type-examples">GitHub MCP · shadcn MCP · File system MCP · Git MCP</div>
+        </div>
+        <div class="mcp-type-body">
+          <div class="mcp-type-row"><span class="mcp-row-k">干嘛</span><span class="mcp-row-v">读写<strong>代码 / 文件 / issue / PR</strong></span></div>
+          <div class="mcp-type-row"><span class="mcp-row-k">范围</span><span class="mcp-row-v">你授权的<strong>仓库 / 文件夹</strong></span></div>
+          <div class="mcp-type-row"><span class="mcp-row-k">能动</span><span class="mcp-row-v">改文件 · 提 PR · 但不动 UI</span></div>
+        </div>
+        <div class="mcp-type-foot">
+          <span class="when">用在</span>跟前端协作 · 改代码 · 拉组件
+        </div>
+      </div>
+
+      <div class="mcp-type-card lvl-mid">
+        <div class="mcp-type-head">
+          <span class="mcp-type-chip">🟡 中侵入</span>
+          <div class="mcp-type-num">03</div>
+          <h3 class="mcp-type-name">网页自动化</h3>
+          <div class="mcp-type-examples">Chrome MCP · Playwright · Browserbase</div>
+        </div>
+        <div class="mcp-type-body">
+          <div class="mcp-type-row"><span class="mcp-row-k">干嘛</span><span class="mcp-row-v">在浏览器里<strong>点 · 填表 · 切 tab · 抓内容</strong></span></div>
+          <div class="mcp-type-row"><span class="mcp-row-k">范围</span><span class="mcp-row-v">只在<strong>浏览器</strong>内 · 出不去</span></div>
+          <div class="mcp-type-row"><span class="mcp-row-k">能动</span><span class="mcp-row-v">模拟用户的 web 操作</span></div>
+        </div>
+        <div class="mcp-type-foot">
+          <span class="when">用在</span>调研 / 自动浏览 / 抓素材
+        </div>
+      </div>
+
+      <div class="mcp-type-card lvl-high">
+        <div class="mcp-type-head">
+          <span class="mcp-type-chip">🔴 高侵入</span>
+          <div class="mcp-type-num">04</div>
+          <h3 class="mcp-type-name">桌面 · 系统接管</h3>
+          <div class="mcp-type-examples">Computer Use · AppleScript · Terminal MCP</div>
+        </div>
+        <div class="mcp-type-body">
+          <div class="mcp-type-row"><span class="mcp-row-k">干嘛</span><span class="mcp-row-v"><strong>看屏幕 · 控鼠标 · 跨应用 · 跑命令</strong></span></div>
+          <div class="mcp-type-row"><span class="mcp-row-k">范围</span><span class="mcp-row-v">整台 Mac / Win · <strong>没边界</strong></span></div>
+          <div class="mcp-type-row"><span class="mcp-row-k">能动</span><span class="mcp-row-v">任何应用 · 任何文件 · 系统命令</span></div>
+        </div>
+        <div class="mcp-type-foot">
+          <span class="when">用在</span>跨应用复杂任务 · 但鼠标会被抢
+        </div>
+      </div>
+    </div>
+
+    <div class="hint-strip" style="margin-top:24px;background:var(--bg-2);border-left-color:var(--ink);">
+      <span class="hint-tag" style="color:var(--ink);">关键</span>
+      "MCP" 一词包了 N 个差别巨大的东西。<strong>先看清楚你在用哪一种</strong>,才知道 AI 能干啥、不能干啥、会不会跑偏。
+    </div>
+  </div>
+</section>
+
+<!-- §04 -->
+<section id="mcp-install">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>04</strong> / 装法</div>
+        <h2 class="section-title">远程一朵云<br>本地一台 Mac · <span class="em">两种装法</span></h2>
+      </div>
+      <p class="section-sub">
+        每个 MCP server 都有两种部署模式 —— 远程云端 OAuth 一键；本地装 desktop app + 手动配置。
+        设计师 95% 的场景直接选远程。
+      </p>
+    </div>
+
+    <div class="mcp-install-stage">
+      <!-- 左：远程 -->
+      <div class="mcp-install-card is-remote">
+        <div class="mcp-install-head">
+          <span class="mcp-install-tag">推荐 · remote</span>
+        </div>
+        <div class="mcp-install-title">远程 <span class="em">Server · 云端</span></div>
+        <div class="mcp-install-sub">cloud · oauth · 5 min · free</div>
+        <svg class="mcp-install-svg" viewBox="0 0 300 260" preserveAspectRatio="xMidYMid meet">
+          <!-- 顶部：云图标 (SVG path) -->
+          <path class="mi-shape is-accent" d="M 90 70 Q 90 38 122 38 Q 144 22 170 36 Q 200 26 214 52 Q 240 56 240 80 Q 240 102 210 102 L 96 102 Q 70 102 70 84 Q 70 70 90 70 Z"/>
+          <text class="mi-label" x="155" y="76" text-anchor="middle">Remote MCP Server</text>
+          <text class="mi-sublabel" x="155" y="92" text-anchor="middle">云端 · cloud · always-on</text>
+
+          <!-- 中间：OAuth 一键 pill + 锁 -->
+          <path class="mi-line is-accent" d="M 155 102 L 155 132"/>
+          <rect class="mi-pill" x="78" y="132" width="154" height="32" rx="16"/>
+          <!-- 锁 icon -->
+          <g transform="translate(91, 142)">
+            <rect width="11" height="9" x="0" y="3" rx="1.5" fill="#EF7627"/>
+            <path d="M 2 3 Q 2 -1 5.5 -1 Q 9 -1 9 3" fill="none" stroke="#EF7627" stroke-width="1.5"/>
+          </g>
+          <text class="mi-pill-text" x="160" y="153" text-anchor="middle">OAuth 一键 · 5 min</text>
+
+          <!-- 下: 连到 AI -->
+          <path class="mi-line is-accent" d="M 155 164 L 155 200"/>
+          <circle class="mi-ai-circle" cx="155" cy="218" r="22"/>
+          <text class="mi-ai-text" x="155" y="222" text-anchor="middle">AI</text>
+
+          <!-- 推荐对勾 -->
+          <g transform="translate(248, 30)">
+            <circle r="14" fill="#EF7627" />
+            <polyline points="-6,0 -2,5 7,-5" fill="none" stroke="#faf7f0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+          <text class="mi-badge is-yes" x="248" y="60" text-anchor="middle" font-size="9.5">推 荐</text>
+        </svg>
+        <div class="mcp-install-foot">
+          <p class="mi-foot-text">
+            <strong>免费 · 所有 Figma plan</strong> · 读 + 写 + Code Connect · 适合 95% 设计师
+          </p>
+          <pre class="mi-pre"># Claude Code
+$ claude plugin install figma
+
+# Cursor: 点 MCP Catalog 一键</pre>
+        </div>
+      </div>
+
+      <!-- 右：本地 -->
+      <div class="mcp-install-card">
+        <div class="mcp-install-head">
+          <span class="mcp-install-tag">进阶 · local</span>
+        </div>
+        <div class="mcp-install-title">本地 <span style="font-family:'Noto Serif SC',serif;color:var(--ink-soft);font-weight:500;">Server (Desktop)</span></div>
+        <div class="mcp-install-sub">localhost:3845 · manual · all features</div>
+        <svg class="mcp-install-svg" viewBox="0 0 300 260" preserveAspectRatio="xMidYMid meet">
+          <!-- 顶部：Mac 图标 (rect + 圆角 + 底座) -->
+          <rect class="mi-shape" x="80" y="34" width="150" height="92" rx="8"/>
+          <!-- 屏幕内框 -->
+          <rect x="88" y="42" width="134" height="74" rx="3" fill="#1f1f29"/>
+          <text x="155" y="76" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c3e88d">$ figma</text>
+          <text x="155" y="92" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#8a8a96">localhost:3845</text>
+          <!-- 底座 -->
+          <rect x="135" y="126" width="40" height="6" fill="#8a8a92"/>
+          <rect x="118" y="132" width="74" height="4" rx="2" fill="#8a8a92"/>
+          <text class="mi-label" x="155" y="148" text-anchor="middle">Local Server (Desktop)</text>
+
+          <!-- 中间：手动配置 pill + 齿轮 -->
+          <path class="mi-line is-dashed" d="M 155 152 L 155 178"/>
+          <rect class="mi-pill is-mute" x="68" y="178" width="174" height="30" rx="15"/>
+          <!-- 齿轮 icon -->
+          <g transform="translate(85, 193)">
+            <circle r="6" fill="none" stroke="#4a4a55" stroke-width="1.5"/>
+            <circle r="2.2" fill="#4a4a55"/>
+            <g stroke="#4a4a55" stroke-width="1.5" stroke-linecap="round">
+              <line x1="0" y1="-8.5" x2="0" y2="-6.5"/>
+              <line x1="0" y1="6.5" x2="0" y2="8.5"/>
+              <line x1="-8.5" y1="0" x2="-6.5" y2="0"/>
+              <line x1="6.5" y1="0" x2="8.5" y2="0"/>
+              <line x1="-6" y1="-6" x2="-4.5" y2="-4.5"/>
+              <line x1="4.5" y1="4.5" x2="6" y2="6"/>
+              <line x1="-6" y1="6" x2="-4.5" y2="4.5"/>
+              <line x1="4.5" y1="-4.5" x2="6" y2="-6"/>
+            </g>
+          </g>
+          <text class="mi-pill-text is-mute" x="165" y="198" text-anchor="middle">手动配置 · enable · port</text>
+
+          <!-- 下: 连到 AI -->
+          <path class="mi-line is-dashed" d="M 155 208 L 155 234"/>
+          <circle class="mi-ai-circle" cx="155" cy="242" r="14"/>
+          <text class="mi-ai-text" x="155" y="246" text-anchor="middle" font-size="11">AI</text>
+
+          <!-- 进阶徽章 -->
+          <g transform="translate(248, 30)">
+            <circle r="14" fill="#8a8a92"/>
+            <text text-anchor="middle" y="4" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#faf7f0">·</text>
+          </g>
+          <text class="mi-badge is-meh" x="248" y="60" text-anchor="middle" font-size="9.5">高 阶</text>
+        </svg>
+        <div class="mcp-install-foot">
+          <p class="mi-foot-text">
+            <strong>Dev / Full seat 必须</strong> · 写 canvas 新 features · 适合每天泡 Figma 的人
+          </p>
+          <pre class="mi-pre"># 1. 开 Figma Desktop
+# 2. Preferences → Enable MCP Server
+# 3. http://localhost:3845 暴露给 client</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint-strip" style="margin-top:32px;background:var(--accent-soft);border-color:var(--accent);">
+      <span class="hint-tag" style="background:var(--accent);color:var(--paper);">先这样</span>
+      第一次用直接选 <strong>远程 server</strong> 接 Claude Code 或 Cursor ——
+      5 分钟搞定。等你重度使用了再切本地。
+    </div>
+  </div>
+</section>
+
+<!-- §05 — MCP 装配台 -->
+<section id="mcp-assembly">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>05</strong> / 装配台</div>
+        <h2 class="section-title">点 MCP<br><span class="em">看 AI 长出新能力</span></h2>
+      </div>
+      <p class="section-sub">
+        给 AI 装 MCP, 解锁能力. 试试一键 <strong>"设计师套餐"</strong> /
+        也可以一个个点着装. 右侧 15 项能力会实时点亮.
+      </p>
+    </div>
+
+    <div class="ma-stage">
+      <!-- 左: 候选 MCP -->
+      <div class="ma-pane ma-candidates">
+        <div class="ma-pane-head">候选 MCP · CANDIDATES</div>
+        <div class="ma-mcp-list" id="ma-mcp-list">
+          <!-- JS 渲染 -->
+        </div>
+        <div class="ma-presets">
+          <div class="ma-pane-head" style="margin-top:14px;">一键套餐 · PRESETS</div>
+          <button class="ma-preset" data-preset="designer">🎨 设计师套餐</button>
+          <button class="ma-preset" data-preset="fullstack">💻 全栈套餐</button>
+          <button class="ma-preset" data-preset="all">⚡ 全装</button>
+          <button class="ma-preset ma-preset-clear" data-preset="clear">✕ 清空</button>
+        </div>
+      </div>
+
+      <!-- 中: AI 大脑 -->
+      <div class="ma-pane ma-brain-pane">
+        <div class="ma-pane-head">AI 大脑 · BRAIN</div>
+        <div class="ma-brain-stage">
+          <div class="ma-orbit" id="ma-orbit">
+            <!-- AI 大脑核心 -->
+            <div class="ma-core">
+              <div class="ma-core-label">AI</div>
+              <div class="ma-core-sub">Claude / Cursor</div>
+            </div>
+            <!-- 装上的 MCP 围绕 (JS 渲染) -->
+          </div>
+        </div>
+        <div class="ma-status">
+          已装 <strong id="ma-count">0</strong> 个 MCP · 解锁
+          <strong id="ma-ability-count">0</strong> / 15 项能力
+        </div>
+        <div class="ma-progress">
+          <div class="ma-progress-bar" id="ma-progress-bar"></div>
+        </div>
+      </div>
+
+      <!-- 右: 能力列表 -->
+      <div class="ma-pane ma-abilities">
+        <div class="ma-pane-head">解锁的能力 · ABILITIES</div>
+        <div class="ma-ability-list" id="ma-ability-list">
+          <!-- JS 渲染 15 行能力 -->
+        </div>
+      </div>
+    </div>
+
+    <div class="hint-strip" style="margin-top:32px;">
+      <span class="hint-tag">领悟</span>
+      <strong>装 MCP 不是技术活, 是"给 AI 配工具"</strong>。
+      你装什么 → AI 就能做什么. 想干新事? 找新 MCP 装上, 不需要换 AI 模型.
+    </div>
+  </div>
+</section>
+
+<!-- §06 — Cheatsheet (visual infographics) -->
+<section id="cheat">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>06</strong> / 速查</div>
+        <h2 class="section-title">三张<br><span class="em">速查图</span></h2>
+      </div>
+      <p class="section-sub">
+        全文压缩到三张视觉图。
+        装 MCP 前翻一遍，立刻能动手。
+      </p>
+    </div>
+
+    <div class="cheat-grid">
+      <!-- 速查 01 · MCP 协议迷你 SVG -->
+      <div class="cheat-card">
+        <div class="cc-num">cheat · 01</div>
+        <h4>MCP 协议 · <span class="em">4 角色</span></h4>
+        <div class="cc-sub">client → protocol → server → tool</div>
+        <svg class="cheat-mini-svg" viewBox="0 0 260 180" preserveAspectRatio="xMidYMid meet">
+          <!-- 4 个迷你节点 -->
+          <rect class="cm-node-rect" x="10" y="74" width="56" height="34" rx="5"/>
+          <text class="cm-label" x="38" y="64" text-anchor="middle">client</text>
+          <text class="cm-node-text" x="38" y="96" text-anchor="middle">AI 工具</text>
+
+          <rect class="cm-node-rect" x="78" y="74" width="56" height="34" rx="5"/>
+          <text class="cm-label" x="106" y="64" text-anchor="middle">protocol</text>
+          <text class="cm-node-text" x="106" y="96" text-anchor="middle" font-size="9">MCP</text>
+
+          <rect class="cm-node-rect is-accent" x="146" y="74" width="56" height="34" rx="5"/>
+          <text class="cm-label" x="174" y="64" text-anchor="middle" fill="#EF7627">server</text>
+          <text class="cm-node-text on-dark" x="174" y="96" text-anchor="middle" font-size="9">MCP Srv</text>
+
+          <rect class="cm-node-rect" x="214" y="74" width="40" height="34" rx="5"/>
+          <text class="cm-label" x="234" y="64" text-anchor="middle">tool</text>
+          <text class="cm-node-text" x="234" y="96" text-anchor="middle" font-size="9">真实</text>
+
+          <!-- arrows -->
+          <line class="cm-arrow" x1="66" y1="91" x2="78" y2="91"/>
+          <polyline points="73,87 78,91 73,95" fill="none" stroke="#8a8a92" stroke-width="1.5"/>
+          <line class="cm-arrow" x1="134" y1="91" x2="146" y2="91"/>
+          <polyline points="141,87 146,91 141,95" fill="none" stroke="#8a8a92" stroke-width="1.5"/>
+          <line class="cm-arrow" x1="202" y1="91" x2="214" y2="91"/>
+          <polyline points="209,87 214,91 209,95" fill="none" stroke="#8a8a92" stroke-width="1.5"/>
+
+          <!-- 流动包 (顺路径) -->
+          <path id="cm-mini-path" d="M 38 132 H 234" stroke="none" fill="none"/>
+          <circle class="cm-packet" r="4">
+            <animateMotion dur="3s" repeatCount="indefinite">
+              <mpath href="#cm-mini-path"/>
+            </animateMotion>
+          </circle>
+          <text class="cm-label" x="132" y="156" text-anchor="middle" font-size="9">JSON-RPC · stdio / HTTP</text>
+        </svg>
+        <dl>
+          <dt>关键</dt>
+          <dd><strong>client 只跟 protocol 说话</strong>。换 tool 不用改 client —— 像 USB 一样标准。</dd>
+        </dl>
+      </div>
+
+      <!-- 速查 02 · 3 个必装 MCP -->
+      <div class="cheat-card b">
+        <div class="cc-num">cheat · 02</div>
+        <h4>必装 <span class="em">3 个 MCP</span></h4>
+        <div class="cc-sub">figma · chrome · playwright</div>
+        <div class="cheat-mcp-trio">
+          <div class="cheat-mcp-icon">
+            <!-- Figma 三色圆 -->
+            <svg viewBox="0 0 40 40">
+              <circle cx="13" cy="10" r="6" fill="#f24e1e"/>
+              <circle cx="27" cy="10" r="6" fill="#ff7262"/>
+              <circle cx="20" cy="20" r="6" fill="#a259ff"/>
+              <circle cx="13" cy="30" r="6" fill="#1abcfe"/>
+              <circle cx="27" cy="30" r="6" fill="#0acf83"/>
+            </svg>
+            <div class="cmi-name">Figma</div>
+            <div class="cmi-sub">读设计稿</div>
+          </div>
+          <div class="cheat-mcp-icon">
+            <!-- Chrome 圆 -->
+            <svg viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="16" fill="none" stroke="#4a4a55" stroke-width="2"/>
+              <circle cx="20" cy="20" r="6" fill="#0a4cff"/>
+              <path d="M 20 4 L 33 26 M 20 4 L 7 26 M 7 26 L 33 26" stroke="#4a4a55" stroke-width="1.5" fill="none"/>
+            </svg>
+            <div class="cmi-name">Chrome</div>
+            <div class="cmi-sub">看真实页</div>
+          </div>
+          <div class="cheat-mcp-icon">
+            <!-- Playwright 戏剧面具 -->
+            <svg viewBox="0 0 40 40">
+              <ellipse cx="14" cy="20" rx="9" ry="11" fill="#1f6b3a" opacity="0.85"/>
+              <ellipse cx="26" cy="20" rx="9" ry="11" fill="#EF7627" opacity="0.85"/>
+              <circle cx="11" cy="18" r="1.5" fill="#faf7f0"/>
+              <circle cx="29" cy="18" r="1.5" fill="#faf7f0"/>
+              <path d="M 9 24 Q 14 28 18 24" fill="none" stroke="#faf7f0" stroke-width="1.5"/>
+              <path d="M 22 24 Q 26 28 31 24" fill="none" stroke="#faf7f0" stroke-width="1.5"/>
+            </svg>
+            <div class="cmi-name">Playwright</div>
+            <div class="cmi-sub">跑回归</div>
+          </div>
+        </div>
+        <dl>
+          <dt>01 · 第一个</dt>
+          <dd><strong>Figma MCP</strong> · 让 AI 看懂 Figma · 代码自动用你的设计系统</dd>
+          <dt>02 · 检查用</dt>
+          <dd><strong>Chrome MCP</strong> · 对比设计稿 / 生产环境必备</dd>
+          <dt>03 · 进阶</dt>
+          <dd><strong>Playwright MCP</strong> · CI 里挂一个 → 自动盯漂移</dd>
+        </dl>
+      </div>
+
+      <!-- 速查 03 · 5 步流程图 SVG -->
+      <div class="cheat-card c">
+        <div class="cc-num">cheat · 03</div>
+        <h4>装 <span class="em">Figma MCP</span> · 5 步</h4>
+        <div class="cc-sub">terminal → install → oauth → verify → use</div>
+        <svg class="cheat-flow-svg" viewBox="0 0 260 240" preserveAspectRatio="xMidYMid meet">
+          <!-- Step 1 -->
+          <circle class="cf-step-circle" cx="22" cy="22" r="14"/>
+          <text class="cf-step-num" x="22" y="26" text-anchor="middle">1</text>
+          <text class="cf-step-text" x="46" y="20">开 Claude Code 终端</text>
+          <text class="cf-step-text" x="46" y="33" fill="#8a8a92" font-size="9.5">terminal · ready</text>
+
+          <path class="cf-step-arrow" d="M 22 38 V 64"/>
+
+          <!-- Step 2 -->
+          <circle class="cf-step-circle" cx="22" cy="74" r="14"/>
+          <text class="cf-step-num" x="22" y="78" text-anchor="middle">2</text>
+          <text class="cf-step-text" x="46" y="72" font-family="JetBrains Mono, monospace" font-weight="700">$ claude plugin install figma</text>
+          <text class="cf-step-text" x="46" y="85" fill="#8a8a92" font-size="9.5">install · 30 s</text>
+
+          <path class="cf-step-arrow" d="M 22 90 V 116"/>
+
+          <!-- Step 3 -->
+          <circle class="cf-step-circle" cx="22" cy="126" r="14"/>
+          <text class="cf-step-num" x="22" y="130" text-anchor="middle">3</text>
+          <text class="cf-step-text" x="46" y="124">浏览器自动开 OAuth → Allow</text>
+          <text class="cf-step-text" x="46" y="137" fill="#8a8a92" font-size="9.5">login · 5 s</text>
+
+          <path class="cf-step-arrow" d="M 22 142 V 168"/>
+
+          <!-- Step 4 -->
+          <circle class="cf-step-circle" cx="22" cy="178" r="14"/>
+          <text class="cf-step-num" x="22" y="182" text-anchor="middle">4</text>
+          <text class="cf-step-text" x="46" y="176" font-family="JetBrains Mono, monospace" font-weight="700">/mcp · 验证连通</text>
+          <text class="cf-step-text" x="46" y="189" fill="#8a8a92" font-size="9.5">verify · figma 出现</text>
+
+          <path class="cf-step-arrow" d="M 22 194 V 218"/>
+
+          <!-- Step 5 (highlight) -->
+          <circle class="cf-step-circle" cx="22" cy="226" r="14" fill="#16161d" stroke="#16161d"/>
+          <text class="cf-step-num" x="22" y="230" text-anchor="middle">5</text>
+          <text class="cf-step-text" x="46" y="224">跟 Claude 说 "把 Figma 实现成代码"</text>
+          <text class="cf-step-text" x="46" y="237" fill="#EF7627" font-size="9.5" font-weight="700">→ AI 开始动手</text>
+        </svg>
+        <dl>
+          <dt>总耗时</dt>
+          <dd>不到 <strong>5 分钟</strong> · 浏览器扫码 OAuth 即可 · 不用改任何代码</dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- 资源链接 + 下一篇引导 -->
+    <div class="hint-strip" style="margin-top:32px;background:var(--accent-soft);border-color:var(--accent);">
+      <span class="hint-tag" style="background:var(--accent);color:var(--paper);">领悟</span>
+      MCP 才是 <span class="em">Agentic</span> 的真正基石 —— 没 MCP 的 AI 只能"用嘴说"，装上 MCP 才能"动手"。
+      下一篇我们讲 <strong>Agent</strong> —— AI 怎么用这些工具<strong>规划、执行、反思</strong>整个任务。
+    </div>
+
+    <div class="hint-strip" style="margin-top:24px;">
+      <span class="hint-tag">延伸</span>
+      想看官方源码 / 文档：
+    </div>
+
+    <div class="refs-grid">
+      <a class="ref-card" href="https://developers.figma.com/docs/figma-mcp-server/" target="_blank" rel="noopener">
+        <div class="rc-source">Figma 官方</div>
+        <div class="rc-title">Figma MCP Server 开发者文档</div>
+        <div class="rc-url">developers.figma.com/docs/figma-mcp-server</div>
+      </a>
+      <a class="ref-card" href="https://github.com/anthropics/skills" target="_blank" rel="noopener">
+        <div class="rc-source">Anthropic GitHub</div>
+        <div class="rc-title">Skills 官方仓库（pptx / docx / pdf / xlsx 等）</div>
+        <div class="rc-url">github.com/anthropics/skills</div>
+      </a>
+      <a class="ref-card" href="https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills" target="_blank" rel="noopener">
+        <div class="rc-source">Anthropic 工程博客</div>
+        <div class="rc-title">Agent Skills 设计原理（progressive disclosure）</div>
+        <div class="rc-url">anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills</div>
+      </a>
+      <a class="ref-card" href="https://www.figma.com/blog/introducing-figma-mcp-server/" target="_blank" rel="noopener">
+        <div class="rc-source">Figma Blog</div>
+        <div class="rc-title">Figma MCP Server 首发公告</div>
+        <div class="rc-url">figma.com/blog/introducing-figma-mcp-server</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="next-post-wrap">
+  <div class="wrap">
+    <a href="q2-skills-figma.html" class="next-post">
+      <div>
+        <div class="np-tag">下一篇 · NEXT · Q2</div>
+        <h4>Skill · AI 的长期记忆</h4>
+        <p>继续往下一篇。</p>
+      </div>
+      <span class="np-cta">下一篇 <span class="arr">→</span></span>
+    </a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="byline-group">
+    <div class="byline">
+      <img class="avatar" src="data:image/jpeg;base64,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" alt="范米花儿">
+      <div class="byline-meta">
+        <div class="byline-label"><span class="dot"></span>作者 · WRITTEN BY</div>
+        <h3 class="byline-name">嗨，我是 <span class="em">范米花儿</span></h3>
+        <p class="byline-tag">设计工程师 ——<br>设计 × 代码，两边都做。</p>
+      </div>
+    </div>
+</div>
+        <div class="footer-wechat">
+      <img class="wechat-qr" src="wechat-qr.png" alt="范米花儿 微信二维码">
+      <div class="wechat-meta">
+        <div class="wechat-label">微信 · WECHAT</div>
+        <div class="wechat-id">vanvan_0422</div>
+      </div>
+    </div>
+    <div class="footer-meta">
+      做于 <span class="mono">2026</span> · 用 <span class="heart">●</span> 写给 <span class="mono">DESIGNERS &amp; DEVELOPERS</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ========= §01 Folder explorer =========
+(function () {
+  const tree = document.getElementById('folderTree');
+  const detail = document.getElementById('folderDetail');
+  if (!tree || !detail) return;
+  const rows = tree.querySelectorAll('.ft-row[data-file]');
+  const replayBtn = document.getElementById('folderReplay');
+  const collapseBtn = document.getElementById('folderCollapse');
+
+  const files = {
+    root: {
+      tag: '根目录 · ROOT',
+      name: '<code>pptx/</code> 整个 skill 的根',
+      meta: '<span class="opt">类型 · 文件夹</span> · <span class="opt">必须包含 SKILL.md</span>',
+      desc: '一个 skill 就是一个文件夹，名字就是 skill 的 id。Claude 启动时会扫所有这种文件夹，但<strong>只读每个里面的 SKILL.md 最前几行</strong>，不会展开其它。',
+      mock: '<span class="ccom"># 文件夹名 = skill 的代号</span>\n<span class="ccom"># 启动时被 Claude 注册</span>\npptx/\n├── SKILL.md\n├── scripts/\n├── references/\n└── templates/'
+    },
+    skillmd: {
+      tag: '必须 · 入口',
+      name: '<code>SKILL.md</code> 唯一必须',
+      meta: '<span class="req">必须</span> · <span class="opt">markdown + YAML frontmatter</span>',
+      desc: '<strong>整个 skill 只有这一个文件必须存在</strong>。最上面是 YAML（name / description），下面是 markdown 正文。Claude 启动只看 YAML，匹配上了再打开正文。',
+      mock: '<span class="cmark">---</span>\n<span class="ckey">name</span>: <span class="cstr">pptx</span>\n<span class="ckey">description</span>: <span class="cstr">Use when ...</span>\n<span class="cmark">---</span>\n\n<span class="ctag"># PowerPoint Skill</span>\n## When to use\n## Steps'
+    },
+    scripts: {
+      tag: '可选 · 执行',
+      name: '<code>scripts/</code> 跑代码的地方',
+      meta: '<span class="opt">可选</span> · <span class="opt">Python · shell · 任何能跑的</span>',
+      desc: '如果 skill 需要做"<strong>Claude 自己干不了</strong>"的活（比如解析 .pptx 二进制），就写脚本放这里。SKILL.md 里告诉 Claude "需要时调用 scripts/xxx.py"。',
+      mock: 'scripts/\n├── ooxml.py        <span class="ccom"># 解析 pptx 内部 XML</span>\n├── extract_text.py <span class="ccom"># 抽出文字</span>\n└── make_slide.py   <span class="ccom"># 生成新 slide</span>'
+    },
+    ooxml: {
+      tag: '可选 · 脚本',
+      name: '<code>ooxml.py</code> 一个解析脚本',
+      meta: '<span class="opt">Python · ~80 行</span> · <span class="opt">SKILL.md 里通过 Bash 调用</span>',
+      desc: 'Claude 自己不太会拆 OOXML（pptx 的底层格式）—— 所以让它调用这个脚本。<strong>脚本输出文字 → Claude 拿到结果继续干活。</strong>',
+      mock: '<span class="ccom"># scripts/ooxml.py</span>\n<span class="ckey">import</span> zipfile\n<span class="ckey">def</span> <span class="ctag">extract</span>(path):\n    <span class="ckey">with</span> zipfile.ZipFile(path) <span class="ckey">as</span> z:\n        <span class="ckey">return</span> z.namelist()'
+    },
+    extract: {
+      tag: '可选 · 脚本',
+      name: '<code>extract_text.py</code>',
+      meta: '<span class="opt">Python · 跑一下抽出所有文字</span>',
+      desc: '专门负责"<strong>把 pptx 里所有可见文字抽出来</strong>"。Claude 在 SKILL.md 的 Steps 里被告知"第一步：run extract_text.py"。',
+      mock: '<span class="ccom"># 用法：</span>\n<span class="ccom"># bash$ python extract_text.py deck.pptx</span>\n<span class="ccom"># → 所有文字逐行打出来</span>'
+    },
+    references: {
+      tag: '可选 · 知识',
+      name: '<code>references/</code> 厚书',
+      meta: '<span class="opt">可选</span> · <span class="opt">markdown 文档 · 一般几百行</span>',
+      desc: '<strong>放查的东西</strong> —— 格式说明、规范清单、长例子。这是 progressive disclosure 最关键的一层：SKILL.md 里写 <code>@references/xx.md</code>，Claude <strong>用到才打开</strong>。',
+      mock: 'references/\n├── pptx_format.md   <span class="ccom"># 200 行讲 OOXML 结构</span>\n├── slide_layouts.md <span class="ccom"># 100 行讲布局类型</span>\n└── examples.md      <span class="ccom"># 300 行例子</span>'
+    },
+    pptxformat: {
+      tag: '可选 · 参考',
+      name: '<code>pptx_format.md</code>',
+      meta: '<span class="opt">长 markdown · 200 行讲 pptx 内部结构</span>',
+      desc: '<strong>SKILL.md 里不写这些细节</strong>，留在这里。Claude 在 SKILL.md 看到 <code>@references/pptx_format.md</code> 这一行，才会读这个文件 —— 用不到的话 token 不烧。',
+      mock: '<span class="ctag"># PPTX Format Reference</span>\n\n## 文件结构\n.pptx 实际是 zip ...\n\n## XML schema\n...'
+    },
+    templates: {
+      tag: '可选 · 素材',
+      name: '<code>templates/</code> 模板',
+      meta: '<span class="opt">可选</span> · <span class="opt">空白文件 · 样板</span>',
+      desc: '放<strong>填空式的素材</strong> —— 比如生成新 pptx 时，先复制一份 default.pptx 出来再改。Claude 会被告知"以这个为底"。',
+      mock: 'templates/\n├── default.pptx   <span class="ccom"># 16:9 / 白底 / 黑字</span>\n├── corporate.pptx <span class="ccom"># 公司皮</span>\n└── minimal.pptx   <span class="ccom"># 极简版</span>'
+    },
+    default: {
+      tag: '可选 · 模板',
+      name: '<code>default.pptx</code>',
+      meta: '<span class="opt">二进制 · 1 张空白 slide</span>',
+      desc: '<strong>每次生成新 pptx 时，Claude 先复制这份打底</strong>。不用从零拼 XML —— 只往里填新内容。这就是 templates/ 存在的全部理由。',
+      mock: '<span class="ccom"># 生成新 deck 的流程：</span>\n<span class="ccom"># 1. cp templates/default.pptx output.pptx</span>\n<span class="ccom"># 2. python scripts/add_slide.py output.pptx</span>\n<span class="ccom"># 3. 返回 output.pptx 给用户</span>'
+    }
+  };
+
+  function setActive(key) {
+    rows.forEach(r => r.classList.toggle('is-active', r.dataset.file === key));
+    const f = files[key];
+    if (!f) return;
+    detail.innerHTML =
+      '<div class="fd-tag">' + f.tag + '</div>' +
+      '<h3 class="fd-name">' + f.name + '</h3>' +
+      '<div class="fd-meta">' + f.meta + '</div>' +
+      '<p class="fd-desc">' + f.desc + '</p>' +
+      '<pre class="fd-mock">' + f.mock + '</pre>';
+  }
+
+  rows.forEach(r => {
+    r.addEventListener('click', () => setActive(r.dataset.file));
+  });
+
+  // Animated entry — "fly out" of folder
+  function playFlyIn() {
+    rows.forEach((r, i) => {
+      r.classList.remove('fly-in');
+      r.classList.add('fly-out');
+    });
+    setTimeout(() => {
+      rows.forEach((r, i) => {
+        setTimeout(() => {
+          r.classList.remove('fly-out');
+          r.classList.add('fly-in');
+        }, i * 70);
+      });
+    }, 50);
+    setTimeout(() => setActive('skillmd'), 800);
+  }
+
+  replayBtn && replayBtn.addEventListener('click', playFlyIn);
+  collapseBtn && collapseBtn.addEventListener('click', () => {
+    rows.forEach(r => {
+      if (r.classList.contains('ft-indent-2')) {
+        r.style.display = (r.style.display === 'none') ? '' : 'none';
+      }
+    });
+  });
+
+  // initial reveal once user scrolls near
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        playFlyIn();
+        io.disconnect();
+      }
+    });
+  }, { threshold: 0.25 });
+  io.observe(tree);
+})();
+
+// ========= §02 Anatomy — code ↔ card =========
+(function () {
+  const code = document.getElementById('anatomyCode');
+  const list = document.getElementById('anatomyList');
+  if (!code || !list) return;
+  const cards = list.querySelectorAll('.anat-card[data-key]');
+  const lines = code.querySelectorAll('.cline[data-key]');
+
+  function setActive(key) {
+    cards.forEach(c => c.classList.toggle('is-active', c.dataset.key === key));
+    lines.forEach(l => l.classList.toggle('is-active', l.dataset.key === key));
+  }
+
+  cards.forEach(c => {
+    c.addEventListener('mouseenter', () => setActive(c.dataset.key));
+    c.addEventListener('click', () => setActive(c.dataset.key));
+  });
+  lines.forEach(l => {
+    l.addEventListener('mouseenter', () => setActive(l.dataset.key));
+    l.addEventListener('click', () => setActive(l.dataset.key));
+  });
+
+  // default
+  setTimeout(() => setActive('desc'), 600);
+})();
+
+// ========= §03 Pyramid — progressive disclosure =========
+(function () {
+  const svg = document.getElementById('pyramidSvg');
+  const chips = document.getElementById('pyChips');
+  const queryText = document.getElementById('pyQueryText');
+  const trace = document.getElementById('pyramidTrace');
+  const dot = document.getElementById('pyDot');
+  if (!svg || !chips || !trace) return;
+
+  const tiers = svg.querySelectorAll('.py-tier');
+  const flows = svg.querySelectorAll('.py-flow');
+
+  const scenarios = {
+    'review-figma': {
+      text: 'review 这个 Figma 设计稿',
+      steps: [
+        { tier: 1, text: '<span class="pt-tier">[Tier 1]</span> 扫所有 skill 的 description<span class="pt-tok"> +100 tok</span>', delay: 0 },
+        { tier: 1, text: '› 命中 <span class="pt-skill">design-reviewer</span> · 关键词 "review" + "design"', delay: 500 },
+        { tier: 2, text: '<span class="pt-tier">[Tier 2]</span> 打开 design-reviewer/SKILL.md<span class="pt-tok"> +600 tok</span>', delay: 1100 },
+        { tier: 2, text: '› 按 Steps 走：1. 抽 frame 信息 2. 对照规则', delay: 1700 },
+        { tier: 3, text: '<span class="pt-tier">[Tier 3]</span> 读 <span class="pt-skill">@references/spacing_rules.md</span><span class="pt-tok"> +1200 tok</span>', delay: 2400 },
+        { tier: 0, text: '› 返回审稿结果给用户。<span class="pt-meta">总用：~1900 tok · 全 skill 启动只占 100</span>', delay: 3100 }
+      ]
+    },
+    'make-pptx': {
+      text: '把会议纪要做成 PPT',
+      steps: [
+        { tier: 1, text: '<span class="pt-tier">[Tier 1]</span> 扫所有 skill 的 description<span class="pt-tok"> +100 tok</span>', delay: 0 },
+        { tier: 1, text: '› 命中 <span class="pt-skill">pptx</span> · 关键词 "PPT" → ".pptx"', delay: 500 },
+        { tier: 2, text: '<span class="pt-tier">[Tier 2]</span> 打开 pptx/SKILL.md<span class="pt-tok"> +500 tok</span>', delay: 1100 },
+        { tier: 3, text: '<span class="pt-tier">[Tier 3]</span> 调 <span class="pt-skill">scripts/make_slide.py</span>', delay: 1700 },
+        { tier: 3, text: '› 复制 <span class="pt-skill">templates/default.pptx</span> 打底', delay: 2300 },
+        { tier: 0, text: '› 返回 output.pptx。<span class="pt-meta">design-reviewer 完全没被打开 —— 0 token 浪费</span>', delay: 3000 }
+      ]
+    },
+    'audit-design': {
+      text: '审一下我这套组件',
+      steps: [
+        { tier: 1, text: '<span class="pt-tier">[Tier 1]</span> 扫所有 skill 的 description<span class="pt-tok"> +100 tok</span>', delay: 0 },
+        { tier: 1, text: '› 命中 <span class="pt-skill">design-reviewer</span> · 关键词 "audit"', delay: 500 },
+        { tier: 1, text: '› 也命中 <span class="pt-skill">library-auditor</span> · "组件" + "审"', delay: 1000 },
+        { tier: 2, text: '<span class="pt-tier">[Tier 2]</span> 反问用户：审 spacing 规范，还是 library 完整性？', delay: 1600 },
+        { tier: 0, text: '› 等用户澄清后再决定打开哪个 Tier 2。<span class="pt-meta">两个 description 都对上 = 主动消歧</span>', delay: 2300 }
+      ]
+    },
+    lunch: {
+      text: '今晚吃什么',
+      steps: [
+        { tier: 1, text: '<span class="pt-tier">[Tier 1]</span> 扫所有 skill 的 description<span class="pt-tok"> +100 tok</span>', delay: 0 },
+        { tier: 0, text: '› 没有 skill 命中 · 普通对话回答', delay: 800 },
+        { tier: 0, text: '› 推荐：附近的兰州拉面？<span class="pt-meta">100 个 skill 挂着 ≠ 100 次浪费 —— 全程只读 100 tok</span>', delay: 1500 }
+      ]
+    }
+  };
+
+  function highlight(tier) {
+    tiers.forEach(t => {
+      const isActive = String(tier) === t.dataset.tier;
+      const isDimmed = tier && Number(t.dataset.tier) > tier;
+      t.classList.toggle('active', isActive);
+      t.classList.toggle('dimmed', !!isDimmed);
+    });
+    flows.forEach(f => {
+      const [from, to] = f.dataset.flow.split('-').map(Number);
+      f.classList.toggle('active', tier && to <= tier);
+    });
+    if (dot) {
+      dot.setAttribute('opacity', tier ? 1 : 0);
+      if (tier === 1) dot.setAttribute('cy', 135);
+      if (tier === 2) dot.setAttribute('cy', 215);
+      if (tier === 3) dot.setAttribute('cy', 295);
+    }
+  }
+
+  function playScenario(key) {
+    const s = scenarios[key];
+    if (!s) return;
+    queryText.textContent = s.text;
+    trace.innerHTML = '';
+    chips.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.q === key));
+    highlight(0);
+
+    s.steps.forEach((step) => {
+      const row = document.createElement('div');
+      row.className = 'pt-row';
+      row.innerHTML = step.text;
+      trace.appendChild(row);
+      setTimeout(() => {
+        row.classList.add('show');
+        if (step.tier) highlight(step.tier);
+      }, step.delay);
+    });
+  }
+
+  chips.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => playScenario(b.dataset.q));
+  });
+
+  // auto-play first scenario when scrolled in
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        setTimeout(() => playScenario('review-figma'), 400);
+        io.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+  io.observe(svg);
+})();
+
+
+
+
+
+
+
+// ========= §04 MCP Assembly Lab =========
+(function() {
+  const mcpList = document.getElementById('ma-mcp-list');
+  const abilityList = document.getElementById('ma-ability-list');
+  const orbit = document.getElementById('ma-orbit');
+  const countEl = document.getElementById('ma-count');
+  const abilityCountEl = document.getElementById('ma-ability-count');
+  const progressBar = document.getElementById('ma-progress-bar');
+  if (!mcpList) return;
+
+  const MCP_DATA = [
+    { id: 'figma',      icon: '🎨', name: 'Figma MCP',          desc: '让 AI 看懂 Figma',           abilities: ['read-figma', 'write-figma', 'code-connect'] },
+    { id: 'chrome',     icon: '🌐', name: 'Chrome DevTools MCP', desc: '让 AI 操作浏览器',           abilities: ['see-rendered', 'inspect-dom', 'check-perf'] },
+    { id: 'playwright', icon: '🎭', name: 'Playwright MCP',      desc: '让 AI 跑视觉回归',           abilities: ['screenshot', 'visual-diff', 'multi-viewport'] },
+    { id: 'shadcn',     icon: '🧩', name: 'shadcn-ui MCP',       desc: '让 AI 用 shadcn 组件',       abilities: ['shadcn-api'] },
+    { id: 'github',     icon: '🐙', name: 'GitHub MCP',          desc: '让 AI 提 PR / 看 issue',     abilities: ['gh-pr', 'gh-issue', 'gh-review'] },
+    { id: 'filesystem', icon: '📁', name: 'Filesystem MCP',      desc: '让 AI 读本地文件',           abilities: ['read-local', 'write-local'] }
+  ];
+
+  const ABILITIES = [
+    { id: 'read-figma',      label: '读 Figma 文件 (layer / Auto Layout / tokens)' },
+    { id: 'write-figma',     label: '写回 Figma canvas (创建 frame / 改 variants)' },
+    { id: 'code-connect',    label: '建立 Figma ↔ 代码组件映射' },
+    { id: 'see-rendered',    label: '看你网站真实渲染' },
+    { id: 'inspect-dom',     label: '审查 DOM / CSS / 计算样式' },
+    { id: 'check-perf',      label: '检查 LCP / FCP / a11y' },
+    { id: 'screenshot',      label: '截屏 (多 viewport)' },
+    { id: 'visual-diff',     label: '跑视觉回归 pixel diff' },
+    { id: 'multi-viewport',  label: '同时 mobile / tablet / desktop' },
+    { id: 'shadcn-api',      label: '直接用 shadcn-ui 组件 API' },
+    { id: 'gh-pr',           label: '自动提 PR' },
+    { id: 'gh-issue',        label: '读 / 创建 GitHub issue' },
+    { id: 'gh-review',       label: '审 PR diff' },
+    { id: 'read-local',      label: '读本地资产 (SVG / 字体 / 图片)' },
+    { id: 'write-local',     label: '写文件 (生成代码 / 报告)' }
+  ];
+
+  const PRESETS = {
+    designer:  ['figma', 'chrome', 'playwright'],
+    fullstack: ['figma', 'filesystem', 'github'],
+    all:       MCP_DATA.map(m => m.id),
+    clear:     []
+  };
+
+  const installed = new Set();
+
+  // 渲染 MCP 候选列表
+  function renderMcpList() {
+    mcpList.innerHTML = '';
+    MCP_DATA.forEach(m => {
+      const btn = document.createElement('button');
+      btn.className = 'ma-mcp' + (installed.has(m.id) ? ' is-on' : '');
+      btn.dataset.id = m.id;
+      btn.innerHTML =
+        '<span class="ma-mcp-icon">' + m.icon + '</span>' +
+        '<span class="ma-mcp-info">' +
+          '<span class="ma-mcp-name">' + m.name + '</span>' +
+          '<span class="ma-mcp-desc">' + m.desc + '</span>' +
+        '</span>' +
+        '<span class="ma-mcp-toggle">+</span>';
+      btn.addEventListener('click', () => toggle(m.id));
+      mcpList.appendChild(btn);
+    });
+  }
+
+  // 渲染能力列表
+  function renderAbilities() {
+    abilityList.innerHTML = '';
+    const unlocked = new Set();
+    installed.forEach(mid => {
+      const m = MCP_DATA.find(x => x.id === mid);
+      m.abilities.forEach(a => unlocked.add(a));
+    });
+    ABILITIES.forEach(a => {
+      const div = document.createElement('div');
+      div.className = 'ma-ability' + (unlocked.has(a.id) ? ' is-on' : '');
+      div.innerHTML =
+        '<span class="ma-ability-icon"></span>' +
+        '<span>' + a.label + '</span>';
+      abilityList.appendChild(div);
+    });
+    return unlocked.size;
+  }
+
+  // 渲染 AI 大脑周围的 MCP 轨道
+  function renderOrbit() {
+    // 清掉旧的轨道 MCP
+    orbit.querySelectorAll('.ma-orbit-mcp, .ma-orbit-line').forEach(el => el.remove());
+    const installedArr = MCP_DATA.filter(m => installed.has(m.id));
+    const n = installedArr.length;
+    if (n === 0) return;
+    const radius = 100; // 距离大脑中心 100px
+    installedArr.forEach((m, i) => {
+      const angle = (i / n) * Math.PI * 2 - Math.PI / 2; // 从顶部开始
+      const x = 130 + Math.cos(angle) * radius - 28;
+      const y = 130 + Math.sin(angle) * radius - 28;
+      // 连接线
+      const line = document.createElement('div');
+      line.className = 'ma-orbit-line';
+      line.style.transform = 'translate(0, -1px) rotate(' + (angle * 180 / Math.PI) + 'deg)';
+      orbit.appendChild(line);
+      // MCP 圆
+      const node = document.createElement('div');
+      node.className = 'ma-orbit-mcp';
+      node.style.left = x + 'px';
+      node.style.top = y + 'px';
+      node.textContent = m.icon;
+      node.title = m.name;
+      orbit.appendChild(node);
+    });
+  }
+
+  function update() {
+    renderMcpList();
+    const n = renderAbilities();
+    renderOrbit();
+    countEl.textContent = installed.size;
+    abilityCountEl.textContent = n;
+    progressBar.style.width = (n / ABILITIES.length * 100) + '%';
+  }
+
+  function toggle(id) {
+    if (installed.has(id)) installed.delete(id);
+    else installed.add(id);
+    update();
+  }
+
+  function applyPreset(preset) {
+    installed.clear();
+    PRESETS[preset].forEach(id => installed.add(id));
+    update();
+  }
+
+  // Wire up presets
+  document.querySelectorAll('.ma-preset').forEach(btn => {
+    btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
+  });
+
+  // Init
+  update();
+})();
+
+</script>
+
+<!-- 路线图弹窗 (10 分类) -->
+<div class="rm-modal" id="rm-modal" hidden>
+  <div class="rm-backdrop" data-rm-close></div>
+  <div class="rm-dialog" role="dialog" aria-label="完整路线图">
+    <button class="rm-close" data-rm-close aria-label="关闭">✕</button>
+    <div class="rm-header">
+      <div class="rm-tag">阅读顺序 · ROADMAP</div>
+      <h3 class="rm-title">START → 10 分类 <span class="rm-em">·</span> 35 篇</h3>
+      <p class="rm-sub">01 界面拆解 5 · 02 视觉系统 3 · 03 状态动作 3 · 04 样式翻译 4 · 05 AI 实现 4 · 06 组件材料 3 · 07 项目启动 4 · 08 调试 3 · 09 协作 3 · 10 上线 3</p>
+    </div>
+    <div class="rm-body">
+      <div class="rm-mod">
+        <div class="rm-mod-key">01 · 界面怎么被代码拆开</div>
+        <div class="rm-mod-list">
+          <a href="basics-figma.html" class="rm-cell"><span class="rm-cell-code">A0</span><span class="rm-cell-name">三件套 · HTML / CSS / JS</span><span class="rm-cell-tier">入门</span></a>
+          <a href="box-figma.html" class="rm-cell"><span class="rm-cell-code">A1</span><span class="rm-cell-name">盒子 · Auto Layout</span><span class="rm-cell-tier">基础</span></a>
+          <a href="components-figma.html" class="rm-cell"><span class="rm-cell-code">A2</span><span class="rm-cell-name">组件 · Variants &amp; Props</span><span class="rm-cell-tier">基础</span></a>
+          <a href="button-system-figma.html" class="rm-cell"><span class="rm-cell-code">A3</span><span class="rm-cell-name">Button System · 组件演化</span><span class="rm-cell-tier">进阶</span></a>
+          <a href="page-figma.html" class="rm-cell"><span class="rm-cell-code">B0</span><span class="rm-cell-name">拼页面 · 组件嵌套</span><span class="rm-cell-tier">入门</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">02 · 视觉规则怎么变成系统</div>
+        <div class="rm-mod-list">
+          <a href="tokens-figma.html" class="rm-cell"><span class="rm-cell-code">C0</span><span class="rm-cell-name">Variables / Tokens 入门</span><span class="rm-cell-tier">入门</span></a>
+          <a href="colors-type-figma.html" class="rm-cell"><span class="rm-cell-code">C1</span><span class="rm-cell-name">Colors / Type / Spacing</span><span class="rm-cell-tier">基础</span></a>
+          <a href="theme-switch-figma.html" class="rm-cell"><span class="rm-cell-code">C2</span><span class="rm-cell-name">Theme 切换实战</span><span class="rm-cell-tier">进阶</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">03 · 界面怎么有状态和动作</div>
+        <div class="rm-mod-list">
+          <a href="states-figma.html" class="rm-cell"><span class="rm-cell-code">D0</span><span class="rm-cell-name">视觉态 · 看得见的状态</span><span class="rm-cell-tier">入门</span></a>
+          <a href="interactive-figma.html" class="rm-cell"><span class="rm-cell-code">D1</span><span class="rm-cell-name">Interactive Component</span><span class="rm-cell-tier">基础</span></a>
+          <a href="transition-figma.html" class="rm-cell"><span class="rm-cell-code">D2</span><span class="rm-cell-name">动画 · Transition</span><span class="rm-cell-tier">进阶</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">04 · 设计样式怎么翻译成 CSS</div>
+        <div class="rm-mod-list">
+          <a href="inverted-radius-figma.html" class="rm-cell"><span class="rm-cell-code">S1</span><span class="rm-cell-name">内翻圆角 · Inverted Border Radius</span><span class="rm-cell-tier">样式</span></a>
+          <a href="shadow-layer-figma.html" class="rm-cell"><span class="rm-cell-code">S2</span><span class="rm-cell-name">阴影 / 层级 · Shadow &amp; Elevation</span><span class="rm-cell-tier">样式</span></a>
+          <a href="glass-blur-figma.html" class="rm-cell"><span class="rm-cell-code">S3</span><span class="rm-cell-name">毛玻璃 / 背景模糊 · Backdrop Blur</span><span class="rm-cell-tier">样式</span></a>
+          <a href="mask-crop-figma.html" class="rm-cell"><span class="rm-cell-code">S4</span><span class="rm-cell-name">遮罩 / 裁切 · Mask &amp; Clip</span><span class="rm-cell-tier">样式</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key" style="color:var(--accent);">05 · AI 怎么参与实现</div>
+        <div class="rm-mod-list">
+          <a href="q1-mcp-figma.html" class="rm-cell"><span class="rm-cell-code">Q1</span><span class="rm-cell-name">MCP · AI 的 USB 接口</span><span class="rm-cell-tier">工具</span></a>
+          <a href="q2-skills-figma.html" class="rm-cell"><span class="rm-cell-code">Q2</span><span class="rm-cell-name">Skills · SKILL.md 拆解</span><span class="rm-cell-tier">工具</span></a>
+          <a href="q3-agent-figma.html" class="rm-cell"><span class="rm-cell-code">Q3</span><span class="rm-cell-name">Agent · 团队式 AI</span><span class="rm-cell-tier">工具</span></a>
+          <a href="k4-mcp-reads-figma.html" class="rm-cell"><span class="rm-cell-code">K4</span><span class="rm-cell-name">MCP 读了啥 · AI 看到的设计稿</span><span class="rm-cell-tier">基础</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">06 · 用什么材料搭界面</div>
+        <div class="rm-mod-list">
+          <a href="k1-ui-library-figma.html" class="rm-cell"><span class="rm-cell-code">K1</span><span class="rm-cell-name">UI 库 · shadcn vs Antd</span><span class="rm-cell-tier">基础</span></a>
+          <a href="k2-shadcn-customize-figma.html" class="rm-cell"><span class="rm-cell-code">K2</span><span class="rm-cell-name">shadcn 改造 · 变成你家的</span><span class="rm-cell-tier">基础</span></a>
+          <a href="k3-granularity-figma.html" class="rm-cell"><span class="rm-cell-code">K3</span><span class="rm-cell-name">颗粒度的代价 · AI 拼不准的根因</span><span class="rm-cell-tier">基础</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">07 · 项目怎么跑起来</div>
+        <div class="rm-mod-list">
+          <a href="f1-npm-figma.html" class="rm-cell"><span class="rm-cell-code">F1</span><span class="rm-cell-name">npm 是什么</span><span class="rm-cell-tier">工程</span></a>
+          <a href="f2-import-figma.html" class="rm-cell"><span class="rm-cell-code">F2</span><span class="rm-cell-name">import 与路径</span><span class="rm-cell-tier">工程</span></a>
+          <a href="f3-dev-build-figma.html" class="rm-cell"><span class="rm-cell-code">F3</span><span class="rm-cell-name">dev vs build</span><span class="rm-cell-tier">工程</span></a>
+          <a href="f4-hidden-files-figma.html" class="rm-cell"><span class="rm-cell-code">F4</span><span class="rm-cell-name">看不见的文件</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">08 · 坏了怎么查</div>
+        <div class="rm-mod-list">
+          <a href="h1-devtools-elements-figma.html" class="rm-cell"><span class="rm-cell-code">H1</span><span class="rm-cell-name">DevTools Elements</span><span class="rm-cell-tier">工程</span></a>
+          <a href="h2-console-error-figma.html" class="rm-cell"><span class="rm-cell-code">H2</span><span class="rm-cell-name">Console 报错</span><span class="rm-cell-tier">工程</span></a>
+          <a href="h3-network-figma.html" class="rm-cell"><span class="rm-cell-code">H3</span><span class="rm-cell-name">Network 面板</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">09 · 怎么协作</div>
+        <div class="rm-mod-list">
+          <a href="g1-commit-branch-figma.html" class="rm-cell"><span class="rm-cell-code">G1</span><span class="rm-cell-name">commit / branch</span><span class="rm-cell-tier">工程</span></a>
+          <a href="g2-conflict-figma.html" class="rm-cell"><span class="rm-cell-code">G2</span><span class="rm-cell-name">冲突怎么解</span><span class="rm-cell-tier">工程</span></a>
+          <a href="g3-pr-review-figma.html" class="rm-cell"><span class="rm-cell-code">G3</span><span class="rm-cell-name">PR / Review</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">10 · 怎么上线</div>
+        <div class="rm-mod-list">
+          <a href="j1-dns-figma.html" class="rm-cell"><span class="rm-cell-code">J1</span><span class="rm-cell-name">DNS / 域名</span><span class="rm-cell-tier">工程</span></a>
+          <a href="j2-vercel-figma.html" class="rm-cell"><span class="rm-cell-code">J2</span><span class="rm-cell-name">Vercel 部署</span><span class="rm-cell-tier">工程</span></a>
+          <a href="j3-cache-cdn-figma.html" class="rm-cell"><span class="rm-cell-code">J3</span><span class="rm-cell-name">缓存 / CDN</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var modal = document.getElementById('rm-modal');
+  if (!modal) return;
+  var openBtns = document.querySelectorAll('[data-rm-open]');
+  var closeBtns = modal.querySelectorAll('[data-rm-close]');
+  function open() { modal.hidden = false; document.body.style.overflow = 'hidden'; }
+  function close() { modal.hidden = true; document.body.style.overflow = ''; }
+  openBtns.forEach(function(b){ b.addEventListener('click', function(e){ e.preventDefault(); open(); }); });
+  closeBtns.forEach(function(b){ b.addEventListener('click', close); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !modal.hidden) close(); });
+})();
+</script>
+
+<script>
+/* inject signature gradient defs into journey SVG */
+(function(){
+  function inject(){
+    var svg = document.getElementById('journey-svg');
+    if(!svg || svg.querySelector('#sig-grad-svg')) return;
+    var ns = 'http://www.w3.org/2000/svg';
+    var defs = document.createElementNS(ns,'defs');
+    var lg = document.createElementNS(ns,'linearGradient');
+    lg.setAttribute('id','sig-grad-svg');
+    lg.setAttribute('x1','0'); lg.setAttribute('y1','0');
+    lg.setAttribute('x2','1'); lg.setAttribute('y2','1');
+    var stops = [
+      ['0%','#D52D00'], ['18%','#EF7627'], ['33%','#FF9A56'],
+      ['50%','#F7F4EC'],
+      ['67%','#D162A4'], ['82%','#B55690'], ['100%','#A30262']
+    ];
+    stops.forEach(function(s){
+      var st = document.createElementNS(ns,'stop');
+      st.setAttribute('offset',s[0]);
+      st.setAttribute('stop-color',s[1]);
+      lg.appendChild(st);
+    });
+    defs.appendChild(lg);
+    svg.insertBefore(defs, svg.firstChild);
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',inject);
+  } else { inject(); }
+})();
+</script>
+</body>
+</html>

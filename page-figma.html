@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拼页面 × 组件嵌套 — 网页是怎么拼出来的</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  @font-face {
+    font-family: 'Alimama ShuHeiTi';
+    src: local('Alimama ShuHeiTi VF'),
+         local('Alimama ShuHeiTi'),
+         local('阿里妈妈数黑体'),
+         url('fonts/AlimamaShuHeiTi-Bold.woff2') format('woff2');
+    font-weight: 400 900;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --bg: #f7f4ec;
+    --bg-2: #e4e4e7;
+    --ink: #16161d;
+    --ink-soft: #4a4a55;
+    --ink-mute: #8a8a92;
+    --line: #e4e4e7;
+    --line-soft: #e3dcca;
+    --accent: #EF7627;
+    --accent-soft: #ffe4dc;
+    --blue: #0a4cff;
+    --blue-soft: #dde6ff;
+    --green: #1f6b3a;
+    --green-soft: #d4ecdb;
+    --yellow: #ffcf3d;
+    --paper: #faf7f0;
+    --shadow: 0 1px 0 rgba(0,0,0,0.04), 0 8px 24px rgba(22,22,29,0.06);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Geist', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(22,22,29,0.05) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+
+  /* Typography */
+  .display-cn { font-family: 'Noto Serif SC', 'Inter', 'PingFang SC', system-ui, sans-serif; font-weight: 900; letter-spacing: -0.01em; }
+  .display-en { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'Inter', 'PingFang SC', system-ui, sans-serif; font-weight: 600; font-style: italic; letter-spacing: -0.02em; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .label { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); }
+
+  /* Layout */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+
+  /* Top bar */
+  .topbar {
+    border-bottom: 1px dashed var(--line);
+    padding: 16px 0;
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-inner { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .brand { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }
+  .brand .dot { display: inline-block; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; margin-right: 8px; vertical-align: middle; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .nav-links { display: flex; gap: 18px; font-size: 13px; flex-wrap: wrap; }
+  .nav-links a { color: var(--ink-soft); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-links a.current { color: var(--accent); font-weight: 600; }
+
+  /* Hero */
+  .hero { padding: 100px 0 80px; position: relative; overflow: hidden; }
+  .hero-meta { display: flex; gap: 24px; margin-bottom: 32px; align-items: center; flex-wrap: wrap; }
+  .hero-meta .pill { padding: 6px 12px; border: 1px solid var(--ink); border-radius: 100px; font-size: 11px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em; }
+  .hero-meta .pill.fill { background: var(--ink); color: var(--bg); }
+  .hero-meta .pill.entry { background: var(--accent); color: white; border-color: var(--accent); }
+  .hero h1 {
+    font-family: 'Noto Serif SC', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(36px, 5.6vw, 76px);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin: 0 0 24px;
+  }
+  .hero h1 .mob-br { display: none; }
+  @media (max-width: 700px) {
+    .hero h1 { font-size: 40px; line-height: 1.1; }
+    .hero h1 .mob-br { display: inline; }
+    .hero h1 .x { margin: 0 0.15em; }
+  }
+  .hero h1 .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-weight: 500; color: var(--accent); }
+  .hero h1 .x { display: inline-block; transform: translateY(-0.05em); margin: 0 0.05em; color: var(--ink-mute); font-weight: 300; }
+  .hero p.lede {
+    font-size: 20px;
+    line-height: 1.5;
+    max-width: 640px;
+    color: var(--ink-soft);
+    margin: 0 0 40px;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 48px;
+    align-items: end;
+  }
+  @media (max-width: 880px) { .hero-grid { grid-template-columns: 1fr; } }
+  .hero-side {
+    border-left: 1px dashed var(--line);
+    padding-left: 24px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .hero-side .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+  .hero-side .row:last-child { border-bottom: none; }
+  .hero-side .row .k { color: var(--ink-mute); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .hero-side .row .v { font-weight: 500; }
+
+  /* Section */
+  section { padding: 80px 0; border-top: 1px solid var(--line); position: relative; }
+  .section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 56px; flex-wrap: wrap; gap: 16px; }
+  .section-num { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink-mute); letter-spacing: 0.1em; }
+  .section-num strong { color: var(--accent); }
+  .section-title {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 900;
+    font-size: clamp(32px, 4.5vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0;
+    max-width: 18ch;
+  }
+  .section-title .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-weight: 500; color: var(--accent); }
+  .section-sub { color: var(--ink-soft); font-size: 17px; max-width: 38ch; line-height: 1.55; margin: 0; }
+
+  /* Problem comparison */
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 24px;
+  }
+  @media (max-width: 720px) { .problem-grid { grid-template-columns: 1fr; } }
+  .problem-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 28px;
+    position: relative;
+  }
+  .problem-card.bad { border-color: var(--accent); background: var(--accent-soft); }
+  .problem-card.good { border-color: var(--green); background: var(--green-soft); }
+  .problem-card .tag {
+    position: absolute; top: -12px; left: 24px;
+    background: var(--bg); padding: 2px 10px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+  .problem-card.bad .tag { color: var(--accent); border: 1px solid var(--accent); }
+  .problem-card.good .tag { color: var(--green); border: 1px solid var(--green); }
+  .problem-card h3 { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-size: 22px; margin: 0 0 12px; font-weight: 700; }
+  .problem-card p { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.6; }
+  .problem-card p + p { margin-top: 10px; }
+
+  /* Quote box */
+  .quote-box {
+    margin-top: 36px;
+    padding: 28px 32px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 22px;
+    line-height: 1.5;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    position: relative;
+  }
+  .quote-box .em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-weight: 500; color: var(--accent); }
+  .quote-box .qmark {
+    position: absolute;
+    top: 8px; right: 22px;
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    font-size: 56px;
+    line-height: 1;
+    color: var(--accent);
+    opacity: 0.35;
+    font-style: italic;
+  }
+  .quote-box .qsub {
+    display: block;
+    margin-top: 10px;
+    font-family: 'Geist', 'Noto Sans SC', sans-serif;
+    font-size: 14px;
+    color: var(--ink-mute);
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  /* ============ §02 Layer ↔ Code mapping ============ */
+  .lc-stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  @media (max-width: 880px) { .lc-stage { grid-template-columns: 1fr; } }
+
+  /* Figma-style layer panel (mock UI) */
+  .figma-layers {
+    background: #2c2c2c;
+    color: #e8e8e8;
+    padding: 0;
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: 12px;
+    border-right: 1px solid var(--line);
+  }
+  .figma-layers .fl-tabs {
+    display: flex;
+    border-bottom: 1px solid #404040;
+    padding: 6px 12px 0;
+    gap: 16px;
+  }
+  .figma-layers .fl-tab {
+    padding: 6px 0 8px;
+    font-size: 11px;
+    color: #999;
+    border-bottom: 2px solid transparent;
+    cursor: default;
+  }
+  .figma-layers .fl-tab.active { color: white; border-bottom-color: #0d99ff; }
+  .figma-layers .fl-pages {
+    padding: 8px 12px;
+    border-bottom: 1px solid #404040;
+    color: #999;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .figma-layers .fl-tree {
+    padding: 8px 0 12px;
+  }
+  .fl-node {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px 4px 8px;
+    font-size: 12.5px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+    border-left: 2px solid transparent;
+  }
+  .fl-node:hover { background: #404040; }
+  .fl-node.is-active {
+    background: rgba(13, 153, 255, 0.22);
+    border-left-color: #0d99ff;
+    color: white;
+  }
+  .fl-node .caret { width: 10px; color: #888; font-size: 10px; flex-shrink: 0; }
+  .fl-node .icon { width: 14px; flex-shrink: 0; opacity: 0.85; }
+  .fl-node .icon svg { display: block; }
+  .fl-node .nm { flex: 1; }
+  .fl-node[data-depth="0"] { padding-left: 12px; }
+  .fl-node[data-depth="1"] { padding-left: 28px; }
+  .fl-node[data-depth="2"] { padding-left: 44px; }
+  .fl-node[data-depth="3"] { padding-left: 60px; }
+
+  /* Code tree (right side) */
+  .code-tree {
+    background: var(--ink);
+    color: #e8e8ec;
+    padding: 18px 22px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.85;
+    overflow-x: auto;
+    position: relative;
+  }
+  .code-tree .ct-head {
+    font-size: 10px;
+    color: #6e6e7a;
+    letter-spacing: 0.1em;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+  .ct-line {
+    white-space: nowrap;
+    border-radius: 3px;
+    padding: 1px 6px;
+    margin: 0 -6px;
+    transition: background-color 0.18s ease;
+    cursor: default;
+  }
+  .ct-line.is-active {
+    background-color: rgba(13, 153, 255, 0.22);
+    box-shadow: inset 2px 0 0 #0d99ff;
+  }
+  .ct-line .ctag { color: #ff8a6e; }
+  .ct-line .cattr { color: #c9b6ff; }
+  .ct-line .cstr { color: #a8e6a3; }
+  .ct-line .ccom { color: #6e6e7a; font-style: italic; }
+
+  .lc-readout {
+    grid-column: 1 / -1;
+    background: var(--bg);
+    padding: 16px 24px;
+    border-top: 1px dashed var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .lc-readout .hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-mute);
+    letter-spacing: 0.04em;
+  }
+  .lc-readout .hint strong { color: var(--accent); }
+  .lc-readout .pickname {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--ink);
+  }
+  .lc-readout .pickname .em {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* ============ §03 Component / Instance ============ */
+  .ci-stage {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 32px;
+  }
+  .ci-controls {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .ci-controls .cc-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .ci-controls .cc-value {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    font-style: italic;
+    font-size: 28px;
+    color: var(--accent);
+    line-height: 1;
+    min-width: 40px;
+    font-variant-numeric: tabular-nums;
+  }
+  .ci-controls .cc-slider {
+    flex: 1;
+    min-width: 180px;
+    max-width: 320px;
+  }
+  .ci-controls .cc-note {
+    font-size: 12.5px;
+    color: var(--ink-mute);
+  }
+
+  .ci-canvas {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+    min-height: 220px;
+    align-content: start;
+  }
+  @media (max-width: 720px) { .ci-canvas { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .ci-canvas { grid-template-columns: 1fr; } }
+
+  .ci-card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
+    animation: cardIn 0.35s ease backwards;
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .ci-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+  .ci-card .ci-thumb {
+    aspect-ratio: 4/3;
+    border-radius: 4px;
+    background-size: cover;
+    background-position: center;
+  }
+  .ci-card .ci-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin: 0;
+    color: var(--ink);
+  }
+  .ci-card .ci-price {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    font-style: italic;
+    color: var(--accent);
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .ci-card .ci-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--ink);
+    color: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 100px;
+    letter-spacing: 0.05em;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .ci-stage.show-instance .ci-card .ci-badge {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .ci-master-row {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 24px;
+    margin-bottom: 28px;
+    align-items: center;
+    padding: 18px;
+    background: var(--bg);
+    border: 1px dashed var(--line);
+    border-radius: 4px;
+  }
+  @media (max-width: 720px) { .ci-master-row { grid-template-columns: 1fr; } }
+  .ci-master-card {
+    background: white;
+    border: 2px solid var(--accent);
+    border-radius: 6px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+  }
+  .ci-master-card::before {
+    content: '◆ MASTER COMPONENT';
+    position: absolute;
+    top: -10px;
+    left: 14px;
+    background: var(--accent);
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+  }
+  .ci-master-card .ci-thumb { aspect-ratio: 4/3; border-radius: 4px; background: linear-gradient(135deg, var(--accent), #ff7355); }
+  .ci-master-card .ci-title { font-weight: 600; font-size: 14px; margin: 0; }
+  .ci-master-card .ci-price { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif; font-style: italic; color: var(--accent); font-size: 18px; font-weight: 600; margin: 0; }
+
+  .ci-master-explain {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink-soft);
+  }
+  .ci-master-explain strong { color: var(--ink); }
+  .ci-master-explain .accent { color: var(--accent); font-weight: 500; }
+
+  /* ============ §04 Data vs Style ============ */
+  .ds-stage {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 32px;
+  }
+  .ds-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-2);
+    padding: 3px;
+    border-radius: 4px;
+    width: fit-content;
+    margin-bottom: 28px;
+  }
+  .ds-toggle button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    border-radius: 3px;
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+  }
+  .ds-toggle button:hover:not(.active) { color: var(--ink); }
+  .ds-toggle button.active {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .ds-toggle button[data-mode="data"].active { background: var(--green); }
+  .ds-toggle button[data-mode="style"].active { background: var(--blue); }
+
+  .ds-canvas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  @media (max-width: 720px) { .ds-canvas { grid-template-columns: 1fr; } }
+
+  .ds-card {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  .ds-card .ds-thumb {
+    aspect-ratio: 16/10;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #ffd95e 0%, #ff8a6e 50%, #EF7627 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .ds-card .ds-thumb::after {
+    content: '☕';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 56px;
+    opacity: 0.85;
+  }
+  .ds-card h4 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ink);
+    font-family: 'Geist', sans-serif;
+  }
+  .ds-card .ds-price {
+    margin: 0;
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .ds-card .ds-desc {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  /* Highlights — overlay on each editable region */
+  .ds-mark {
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  .ds-card.show-data .ds-mark[data-kind="data"] {
+    outline: 2px dashed var(--green);
+    outline-offset: 4px;
+    background-color: rgba(31, 107, 58, 0.06);
+    border-radius: 4px;
+  }
+  .ds-card.show-style .ds-mark[data-kind="style"] {
+    outline: 2px dashed var(--blue);
+    outline-offset: 4px;
+    background-color: rgba(10, 76, 255, 0.06);
+    border-radius: 4px;
+  }
+
+  .ds-card .ds-flag {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    padding: 2px 8px;
+    border-radius: 100px;
+    letter-spacing: 0.06em;
+    z-index: 4;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .ds-card.show-data [data-kind="data"] > .ds-flag,
+  .ds-card.show-style [data-kind="style"] > .ds-flag {
+    opacity: 1;
+  }
+  .ds-flag.df-data { background: var(--green); color: white; left: 50%; top: 0; }
+  .ds-flag.df-style { background: var(--blue); color: white; left: 50%; top: 0; }
+
+  /* Right column explainer */
+  .ds-explain { display: flex; flex-direction: column; gap: 18px; }
+  .ds-explain h4 {
+    margin: 0 0 4px;
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ds-explain h4 .sw {
+    width: 12px; height: 12px; border-radius: 2px;
+  }
+  .ds-explain .sw.green { background: var(--green); }
+  .ds-explain .sw.blue { background: var(--blue); }
+  .ds-explain .ds-block {
+    padding: 18px 20px;
+    background: var(--bg);
+    border-radius: 6px;
+    border: 1px solid var(--line-soft);
+    transition: all 0.25s;
+  }
+  .ds-explain .ds-block.is-active.data { border-color: var(--green); background: var(--green-soft); }
+  .ds-explain .ds-block.is-active.style { border-color: var(--blue); background: var(--blue-soft); }
+  .ds-explain .ds-block p {
+    margin: 6px 0 0;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+  .ds-explain .ds-block ul {
+    margin: 8px 0 0;
+    padding-left: 20px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+  }
+  .ds-explain .ds-block li::marker { color: var(--accent); }
+  .ds-explain .ds-block code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: rgba(255,255,255,0.6);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+
+  /* ============ §05 Naming ============ */
+  .nm-stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 880px) { .nm-stage { grid-template-columns: 1fr; } }
+  .nm-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 24px;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  .nm-card.bad { border-color: var(--accent); background: var(--accent-soft); }
+  .nm-card.good { border-color: var(--green); background: var(--green-soft); }
+  .nm-card .nm-tag {
+    position: absolute; top: -12px; left: 20px;
+    padding: 2px 10px;
+    background: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+  .nm-card.bad .nm-tag { color: var(--accent); border: 1px solid var(--accent); }
+  .nm-card.good .nm-tag { color: var(--green); border: 1px solid var(--green); }
+  .nm-card h4 {
+    margin: 4px 0 12px;
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .nm-tree {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.85;
+  }
+  .nm-card.bad .nm-tree { border-color: rgba(255, 77, 46, 0.3); }
+  .nm-card.good .nm-tree { border-color: rgba(31, 107, 58, 0.3); }
+  .nm-tree .nm-row { display: flex; gap: 6px; align-items: center; }
+  .nm-tree .nm-row .branch { color: var(--ink-mute); flex-shrink: 0; white-space: pre; }
+  .nm-tree .nm-row .iconmark { font-size: 13px; flex-shrink: 0; }
+  .nm-tree .nm-row .name { flex: 1; }
+  .nm-card.bad .nm-tree .name { color: #b03e22; }
+  .nm-card.good .nm-tree .name { color: var(--green); font-weight: 500; }
+  .nm-card .nm-foot {
+    margin-top: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+  .nm-card .nm-foot strong { color: var(--ink); }
+
+  /* Naming switch (BAD/GOOD) */
+  .nm-switch {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-2);
+    padding: 3px;
+    border-radius: 4px;
+    width: fit-content;
+    margin: 0 auto 28px;
+  }
+  .nm-switch button {
+    background: transparent; border: none; cursor: pointer;
+    padding: 8px 18px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--ink-soft);
+    border-radius: 3px;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .nm-switch button.active {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .nm-switch button[data-mode="bad"].active { background: var(--accent); }
+  .nm-switch button[data-mode="good"].active { background: var(--green); }
+  .nm-switch button[data-mode="both"].active { background: var(--ink); }
+
+  .nm-stage[data-show="bad"] .nm-card.good { opacity: 0.32; filter: saturate(0.5); }
+  .nm-stage[data-show="good"] .nm-card.bad { opacity: 0.32; filter: saturate(0.5); }
+
+  .nm-followup {
+    margin-top: 32px;
+    padding: 22px 28px;
+    background: var(--ink);
+    color: var(--bg);
+    border-radius: 6px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 24px;
+    align-items: center;
+  }
+  @media (max-width: 600px) { .nm-followup { grid-template-columns: 1fr; gap: 12px; } }
+  .nm-followup .nf-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .nm-followup p {
+    margin: 0;
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 18px;
+    line-height: 1.55;
+    font-weight: 500;
+  }
+  .nm-followup p .em {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    color: var(--accent);
+  }
+
+  /* ============ §06 Recap & Tips ============ */
+  .recap-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 880px) { .recap-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .recap-grid { grid-template-columns: 1fr; } }
+  .recap-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 22px;
+    transition: all 0.25s;
+    position: relative;
+  }
+  .recap-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: var(--shadow);
+  }
+  .recap-num {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    font-style: italic;
+    font-size: 36px;
+    line-height: 1;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .recap-card h4 {
+    margin: 0 0 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    font-family: 'Geist', 'Noto Sans SC', sans-serif;
+  }
+  .recap-card p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+
+  .next-up {
+    padding: 28px 32px;
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 24px;
+    align-items: center;
+  }
+  @media (max-width: 720px) { .next-up { grid-template-columns: 1fr; gap: 16px; text-align: left; } }
+  .next-up .nu-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.3;
+  }
+  .next-up h4 {
+    margin: 6px 0 0;
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .next-up p {
+    margin: 6px 0 0;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .next-up .nu-cta {
+    background: var(--ink);
+    color: var(--bg);
+    text-decoration: none;
+    padding: 12px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    border-radius: 100px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .next-up .nu-cta:hover {
+    background: var(--accent);
+    transform: translateX(4px);
+  }
+  .next-up .nu-cta::after {
+    content: ' →';
+  }
+
+  /* ============= Unified next-post block (used across the series) ============= */
+  .next-post {
+    margin-top: 48px;
+    padding: 32px 36px;
+    background: var(--ink);
+    color: var(--bg);
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: center;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .next-post::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 100% 0%, rgba(255,77,46,0.12), transparent 55%);
+    pointer-events: none;
+  }
+  .next-post:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(22,22,29,0.22); }
+  @media (max-width: 720px) { .next-post { grid-template-columns: 1fr; padding: 24px; gap: 20px; } }
+  .next-post .np-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+  .next-post h4 {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-size: 26px;
+    margin: 0 0 10px;
+    font-weight: 700;
+    color: white;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .next-post h4 .em {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .next-post p {
+    margin: 0;
+    color: rgba(255,255,255,0.72);
+    font-size: 14px;
+    line-height: 1.65;
+    max-width: 560px;
+  }
+  .next-post p strong { color: white; font-weight: 600; }
+  .next-post .np-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 24px;
+    background: var(--accent);
+    color: white;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    transition: background 0.18s, color 0.18s, transform 0.18s;
+    position: relative;
+    z-index: 1;
+  }
+  .next-post:hover .np-cta { background: white; color: var(--ink); transform: translateX(2px); }
+  .next-post .np-cta .arr { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif; font-style: italic; font-size: 18px; font-weight: 500; }
+
+  /* Slider style (matches box-figma) */
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--line);
+    border-radius: 0;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    background: var(--ink);
+    border: 2px solid var(--bg);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px var(--ink);
+    transition: transform 0.1s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); background: var(--accent); }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px;
+    background: var(--ink);
+    border: 2px solid var(--bg);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px var(--ink);
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 56px 0 64px;
+    background: var(--bg);
+  }
+  .byline {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    padding-bottom: 32px;
+    border-bottom: 1px dashed var(--line);
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .byline::before {
+    content: '';
+    position: absolute;
+    top: -56px; left: 0;
+    width: 32px; height: 1px;
+    background: var(--accent);
+  }
+  .byline .avatar {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 3px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--line), 0 6px 20px rgba(22,22,29,0.10);
+    background: var(--paper);
+  }
+  .byline-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.18em;
+    margin-bottom: 8px;
+  }
+  .byline-label .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: 1px;
+  }
+  .byline-name {
+    font-family: 'Noto Serif SC', 'Inter', 'PingFang SC', system-ui, sans-serif;
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+  }
+  .byline-name .em {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .byline-tag {
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    margin: 0;
+    max-width: 52ch;
+  }
+  .footer-meta {
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-mute);
+    letter-spacing: 0.05em;
+  }
+  .footer-meta .heart { color: var(--accent); }
+  .footer-meta .mono { color: var(--ink-soft); font-weight: 500; }
+  @media (max-width: 600px) {
+    .byline { flex-direction: column; text-align: center; align-items: center; gap: 16px; }
+    .byline-tag { margin-left: auto; margin-right: auto; }
+  }
+
+  /* Subtle entry animation */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  section { animation: fadeIn 0.6s ease-out backwards; }
+
+  a.brand { text-decoration: none; color: inherit; transition: color 0.2s; cursor: pointer; }
+  a.brand:hover { color: var(--accent); }
+  .brand-arrow { margin-right: 6px; color: var(--ink-mute); display: inline-block; transition: transform 0.2s, color 0.2s; }
+  .brand:hover .brand-arrow { color: var(--accent); transform: translateX(-2px); }
+  .byline-contact { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; }
+  .byline-contact .contact-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); padding: 2px 8px; border: 1px solid var(--line); border-radius: 3px; }
+  .byline-contact .contact-id { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--ink); background: var(--accent-soft); padding: 3px 10px; border-radius: 4px; letter-spacing: 0.02em; }
+  .byline-contact .contact-hint { font-size: 12px; color: var(--ink-soft); font-style: italic; }
+  /* === Roadmap Modal === */
+  .rm-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 30px 16px; }
+  .rm-modal[hidden] { display: none; }
+  .rm-backdrop { position: absolute; inset: 0; background: rgba(22,22,29,0.55); backdrop-filter: blur(4px); animation: rm-fade 0.2s; }
+  @keyframes rm-fade { from { opacity: 0; } to { opacity: 1; } }
+  .rm-dialog { position: relative; background: var(--bg); border-radius: 12px; max-width: 720px; width: 100%; max-height: calc(100vh - 60px); overflow-y: auto; padding: 32px 36px 24px; box-shadow: 0 30px 80px rgba(0,0,0,0.3); animation: rm-pop 0.25s cubic-bezier(0.4,0,0.2,1); }
+  @keyframes rm-pop { from { transform: scale(0.96) translateY(8px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+  .rm-close { position: absolute; top: 14px; right: 16px; background: transparent; border: none; cursor: pointer; font-size: 20px; color: var(--ink-mute); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.15s; line-height: 1; }
+  .rm-close:hover { background: var(--bg-2); color: var(--ink); }
+  .rm-header { margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px dashed var(--line); }
+  .rm-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
+  .rm-title { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; font-size: 28px; margin: 0 0 6px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.1; }
+  .rm-title .rm-em { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Noto Sans SC', 'PingFang SC', sans-serif; color: var(--accent); font-weight: 500; }
+  .rm-sub { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-mute); margin: 0; }
+  .rm-body { display: flex; flex-direction: column; gap: 18px; }
+  .rm-mod-key { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink); font-weight: 700; margin-bottom: 8px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .rm-mod-list { display: flex; flex-direction: column; gap: 6px; }
+  .rm-cell { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; padding: 9px 13px; border-radius: 5px; background: var(--paper); border: 1px solid var(--line); text-decoration: none; color: inherit; transition: all 0.15s; }
+  .rm-cell:hover { border-color: var(--accent); background: var(--accent-soft); transform: translateX(3px); }
+  .rm-cell-code { font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', 'Inter', 'PingFang SC', system-ui, sans-serif; font-style: italic; font-weight: 500; color: var(--accent); font-size: 15px; }
+  .rm-cell-name { font-size: 13px; color: var(--ink); }
+  .rm-cell-tier { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.08em; color: var(--ink-mute); text-transform: uppercase; border: 1px solid var(--line); padding: 2px 7px; border-radius: 3px; }
+  .rm-footer { margin-top: 22px; padding-top: 16px; border-top: 1px dashed var(--line); display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink-soft); flex-wrap: wrap; gap: 8px; }
+  .rm-wechat { font-family: 'JetBrains Mono', monospace; background: var(--accent-soft); color: var(--ink); padding: 3px 10px; border-radius: 3px; font-weight: 600; letter-spacing: 0.02em; }
+  .nav-links a[data-rm-open] { cursor: pointer; }
+
+  /* === footer byline === */
+  .byline-group, .byline-wrap.byline-group { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+  .byline-group .byline { display: flex; gap: 16px; align-items: flex-start; margin: 0; min-width: 0; }
+  .byline-group .avatar { width: 56px; height: 56px; flex-shrink: 0; }
+  .byline-group .byline-meta { min-width: 0; }
+  .byline-group .byline-name { font-size: 18px; }
+  .byline-group .byline-tag { font-size: 12px; line-height: 1.55; }
+  .byline-group .byline-contact { margin-top: 10px; padding-top: 10px; display: flex; align-items: flex-start; gap: 10px; flex-wrap: nowrap; }
+  .byline-group .byline-contact .contact-label { padding: 1px 6px; font-size: 10px; align-self: flex-start; }
+  .byline-group .byline-contact .contact-id { padding: 2px 8px; font-size: 12px; align-self: flex-start; }
+  .byline-group .byline-contact .contact-hint { font-size: 11px; line-height: 1.5; }
+  .byline-contact-text { display: flex; flex-direction: column; gap: 5px; min-width: 0; flex: 1; padding-top: 1px; }
+  .byline-contact .qr-card { width: 68px; height: 68px; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; flex-shrink: 0; position: relative; background: #fff; }
+  .byline-contact .qr-card.qr-empty { border-style: dashed; background: var(--accent-soft); }
+  .byline-contact .qr-card.qr-empty::after { content: "二维码\A 待补充"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; white-space: pre-line; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--ink-mute); letter-spacing: 0.05em; line-height: 1.5; }
+  .byline-contact .qr-card img { width: 100%; height: 100%; display: block; object-fit: cover; }
+  @media (max-width: 700px) {
+    .byline-group, .byline-wrap.byline-group { grid-template-columns: 1fr; gap: 18px; }
+    .byline-group .byline + .byline { padding-top: 18px; border-top: 1px dashed var(--line); }
+  }
+
+  
+  /* lesbian-flag-5color-band — topbar 底部 2px 5 色细 band */
+  .topbar {
+    background-image: linear-gradient(to right, #D52D00 0 14.28%, #EF7627 14.28% 28.57%, #FF9A56 28.57% 42.86%, #FFFFFF 42.86% 57.14%, #D162A4 57.14% 71.43%, #B55690 71.43% 85.71%, #EF7627 85.71% 100%) !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 2px !important;
+    background-position: bottom !important;
+  }
+
+/* === portfolio-inspired 入场 + hover 动效(米色基调统一)=== */
+@keyframes p-fade-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes p-fade-down { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes p-scale-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+
+.topbar { animation: p-fade-down 0.7s cubic-bezier(0.16,1,0.3,1) backwards; }
+.hero, header.hero { animation: p-fade-up 0.85s cubic-bezier(0.16,1,0.3,1) 0.15s backwards; }
+.section-head { animation: p-fade-up 0.8s cubic-bezier(0.16,1,0.3,1) backwards; }
+
+.rm-cell, .next-post, .j-node, .vol-tab, .hero-film-card, .nav-links a,
+.track-tab, .ld, .jp-filter, .hero-cinema-link {
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s ease-out, color 0.2s, background-color 0.2s;
+}
+.rm-cell:hover, .next-post:hover, .hero-film-card:hover, .vol-tab:hover {
+  transform: translateY(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar, .hero, .section-head { animation: none !important; }
+  .rm-cell, .next-post, .j-node, .vol-tab, .hero-film-card,
+  .nav-links a, .track-tab, .ld, .jp-filter, .hero-cinema-link {
+    transition: none !important;
+  }
+  .rm-cell:hover, .next-post:hover, .hero-film-card:hover, .vol-tab:hover {
+    transform: none !important;
+  }
+}
+
+  /* 字体分工:正文=阿里普惠体, 标题=阿里妈妈数黑体 */
+  html, body, p, span, div, a, button, input, textarea, select, label, li, td, th,
+  .lede, .desc, .section-sub, .hi-desc, .nav-links, .demo-label, .brand, .tier {
+    font-family: 'Alibaba PuHuiTi 3.0', '阿里巴巴普惠体 3.0', '阿里巴巴普惠体',
+                 system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif !important;
+  }
+  h1, h2, h3, h4, .display-en, .display-cn, .hi-title, .hc-title,
+  .section-title, .sc-mid, .si-title, .pv-title, .tv-title, .k-title,
+  .ch-title, .season-title, .ep-title, .nb-h,
+  [class*="-title"], [class$="-title"] {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', sans-serif !important;
+    font-style: normal !important;
+    font-weight: 700 !important;
+  }
+
+  /* footer 紧凑 + 白底 */
+  footer {
+    background: #ffffff !important;
+    padding: 32px 0 !important;
+    border-top: 1px solid #e4e4e7 !important;
+  }
+  footer .wrap { padding: 0 32px !important; }
+  footer .byline { gap: 14px !important; align-items: center !important; }
+  footer .avatar { width: 56px !important; height: 56px !important; }
+  footer .byline-name { font-size: 18px !important; margin: 4px 0 !important; line-height: 1.3 !important; }
+  footer .byline-tag { font-size: 13px !important; margin: 2px 0 0 !important; line-height: 1.4 !important; }
+  footer .byline-label { font-size: 10px !important; letter-spacing: 0.14em !important; }
+  footer .footer-meta { font-size: 11px !important; margin-top: 18px !important; padding-top: 18px !important; }
+
+  /* .em 和 .display-cn 用数黑 + 橙色 */
+  .em, .display-cn {
+    font-family: 'Alimama ShuHeiTi VF', 'Alimama ShuHeiTi', '阿里妈妈数黑体', sans-serif !important;
+    color: #EF7627 !important;
+  }
+
+  /* manifesto 文字填满 */
+  .manifesto p { max-width: 100% !important; }
+
+  /* roadmap 居中 + 缩小底部间距 */
+  .journey-svg {
+    transform-origin: 50% 0% !important;
+  }
+  section#roadmap, #roadmap {
+    padding-bottom: 24px !important;
+  }
+  .vol-panel { padding-bottom: 0 !important; margin-bottom: 0 !important; }
+
+  /* 子页清掉冗余引导文案 */
+  .lede, .section-sub { display: none !important; }
+
+  /* footer 文案统一左对齐 */
+  footer .footer-meta, .footer-meta {
+    text-align: left !important;
+    justify-content: flex-start !important;
+  }
+
+  /* 内页 hero 标题用黑色,不要橙色 */
+  header.hero h1 .em,
+  header.hero h1 .display-cn,
+  header.hero h1 .display-en,
+  header.hero h1 .x {
+    color: var(--ink, #0a0a0a) !important;
+  }
+
+  /* signature 渐变 · 7 色个人标识 */
+  :root {
+    --sig-grad: linear-gradient(90deg,
+      #D52D00 0%, #EF7627 18%, #FF9A56 33%,
+      #FFFFFF 50%,
+      #D162A4 67%, #B55690 82%, #A30262 100%);
+  }
+  /* 1. 站标 ● 改渐变签名球 */
+  .brand .dot {
+    background: var(--sig-grad) !important;
+    width: 10px !important;
+    height: 10px !important;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.04) !important;
+  }
+  /* 3. 顶部阅读进度条 · scroll-driven */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--sig-grad);
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    z-index: 9999;
+    pointer-events: none;
+    animation: sig-progress linear;
+    animation-timeline: scroll(root);
+  }
+  @keyframes sig-progress { to { transform: scaleX(1); } }
+  /* Safari fallback:不支持 scroll-timeline 时藏起来,不残留 */
+  @supports not (animation-timeline: scroll()) {
+    body::before { display: none; }
+  }
+
+  /* 去掉 topbar 底部 5 色 band(改用顶部进度条) */
+  .topbar {
+    background-image: none !important;
+  }
+
+  /* 已读环 + 进度条用 signature 渐变 */
+  .j-node.read .j-node-circle {
+    stroke: url(#sig-grad-svg) !important;
+    stroke-width: 2.5 !important;
+  }
+  .book-progress-fill {
+    background: var(--sig-grad) !important;
+  }
+
+  /* footer 右下角微信二维码 */
+  footer .wrap {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-rows: auto auto !important;
+    column-gap: 32px !important;
+    row-gap: 16px !important;
+    align-items: end !important;
+  }
+  footer .byline-group { grid-column: 1; grid-row: 1; }
+  footer .footer-meta { grid-column: 1; grid-row: 2; }
+  footer .footer-wechat {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    align-self: center;
+  }
+  .footer-wechat .wechat-qr {
+    width: 92px;
+    height: 92px;
+    border-radius: 6px;
+    border: 1px solid var(--line, #e4e4e7);
+    background: #fff;
+    display: block;
+  }
+  .footer-wechat .wechat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: var(--ink-mute, #6b6b75);
+    font-weight: 700;
+    text-align: center;
+  }
+  .footer-wechat .wechat-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink, #0a0a0a);
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  /* topbar 中间课程 CTA */
+  .course-cta {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 6px 14px !important;
+    border: 1px solid var(--line, #e4e4e7) !important;
+    border-radius: 100px !important;
+    font-family: 'Alibaba PuHuiTi 3.0', 'PingFang SC', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: var(--ink, #0a0a0a) !important;
+    text-decoration: none !important;
+    background: #fff !important;
+    transition: all 0.2s ease !important;
+    letter-spacing: 0.02em !important;
+    white-space: nowrap !important;
+  }
+  .course-cta:hover {
+    border-color: var(--accent, #EF7627) !important;
+    color: var(--accent, #EF7627) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(239,118,39,0.12) !important;
+  }
+  .course-cta .cta-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--sig-grad, #EF7627);
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .course-cta .cta-arrow {
+    font-size: 11px;
+    opacity: 0.55;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  .course-cta:hover .cta-arrow {
+    transform: translate(2px, -2px);
+    opacity: 1;
+  }
+  @media (max-width: 760px) {
+    .course-cta { font-size: 11px !important; padding: 5px 10px !important; }
+    .course-cta .cta-text { display: none; }
+  }
+
+  /* 去掉右上角 HOME tab(只一个 tab,没用) */
+  nav.vol-tabs { display: none !important; }
+
+  /* 修 .wf-btn.primary hover 被错误覆盖背景的问题 */
+  .wf-btn.primary:hover:not(:disabled) {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-color: var(--accent) !important;
+    filter: brightness(0.92);
+  }
+
+  /* 隐藏入口与路线图 */
+  #tracks, .track-switch, #x_alt-roadmap { display: none !important; }
+
+  /* 主页 manifesto → roadmap 之间补回视觉间隔 */
+  #roadmap {
+    position: relative;
+    margin-top: 56px !important;
+    padding-top: 88px !important;
+  }
+  #roadmap::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 1px;
+    background: var(--sig-grad, #EF7627);
+    opacity: 0.7;
+  }
+
+  /* footer 内的 REFERENCES 引用块隐藏(全站 footer 一致) */
+  footer .label, footer .source-list { display: none !important; }
+
+  /* topbar 三栏严格对齐:brand 左 / CTA 中 / nav 右 */
+  .topbar-inner {
+    display: grid !important;
+    grid-template-columns: 1fr auto 1fr !important;
+    align-items: center !important;
+    gap: 16px !important;
+  }
+  .topbar-inner .brand,
+  .topbar-inner .brand-block { justify-self: start; }
+  .topbar-inner .course-cta { justify-self: center; }
+  .topbar-inner .nav-links,
+  .topbar-inner nav.nav-links,
+  .topbar-inner nav.vol-tabs { justify-self: end; }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="wrap topbar-inner">
+    <a href="index.html#vol-3" class="brand"><span class="brand-arrow">←</span><span class="dot"></span>AI LABBOOK</a>
+    <a class="course-cta" href="https://xhslink.com/m/92BZZ1bF3xv" target="_blank" rel="noopener">
+      <span class="cta-dot"></span>
+      <span class="cta-text">给设计师的零基础 AI 课</span>
+      <span class="cta-arrow">↗</span>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html#vol-3" data-rm-open>路线图</a>
+    </nav>
+  </div>
+</div>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-meta">
+      <span class="pill fill">实验互动 · INTERACTIVE</span>
+      <span class="pill">2026 · 设计 × 代码</span>
+      <span class="pill entry">B · 入门 · 阅读 ≈ 10 分钟</span>
+    </div>
+    <div class="hero-grid">
+      <div>
+        <h1>
+          <span class="display-cn">拼页面</span>
+          <span class="x">×</span><br class="mob-br">
+          <span class="em">组件嵌套</span><br>
+          <span class="display-cn">网页是怎么<br>拼出来的</span>
+        </h1>
+        <p class="lede">
+          设计师每天都在 Figma 里画 Frame 嵌套 Frame —— <br>
+          其实网页代码也是这样。<br>
+          这一篇，我们带你从 Figma 视角看清楚：图层和代码组件，到底怎么对应。
+        </p>
+      </div>
+      <div class="hero-side">
+        <div class="row"><span class="k">本页讲什么</span><span class="v">页面结构基础</span></div>
+        <div class="row"><span class="k">含互动</span><span class="v">4 个轻量演示</span></div>
+        <div class="row"><span class="k">面向</span><span class="v">完全不懂代码</span></div>
+        <div class="row"><span class="k">前置知识</span><span class="v">无</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- §01 / 问题 -->
+<section id="problem">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>01</strong> / 问题</div>
+        <h2 class="section-title">设计稿和代码<br>到底<span class="em">怎么对应</span>？</h2>
+      </div>
+      <p class="section-sub">
+        你做完设计稿丢给前端，开发出来的 UI 看着像，但每改一个字段，所有人都要忙半天。
+        问题不在「沟通」，问题在「结构」。
+      </p>
+    </div>
+
+    <div class="problem-grid">
+      <div class="problem-card bad">
+        <span class="tag">BAD · 各管各的</span>
+        <h3>设计稿 ≠ 代码</h3>
+        <p>设计稿里你画了一张漂亮的卡片。前端拿到稿子，重新拆、重新搭、自己起名字。
+        于是同一件东西在两个世界里有两种结构、两套名字。</p>
+        <p>结果：你说"改一下卡片上的标题样式"，前端要在 5 个地方改，每个还都不一样。</p>
+      </div>
+
+      <div class="problem-card good">
+        <span class="tag">GOOD · 同一件事</span>
+        <h3>设计稿 = 代码结构</h3>
+        <p>你画的 Frame 是什么，前端代码里就有什么；你的图层叫什么名，代码组件就叫什么名。
+        一一对应、一处改、处处变。</p>
+        <p>结果：你说"卡片标题改成大一号"，前端只动一处。</p>
+      </div>
+    </div>
+
+    <div class="quote-box">
+      <span class="qmark">"</span>
+      设计稿不是<span class="em">图</span>，是<span class="em">结构</span>。
+      <span class="qsub">画图层 = 在搭一棵会被代码"翻译"的树。你怎么搭，前端怎么写。</span>
+    </div>
+  </div>
+</section>
+
+<!-- §02 / 一个网页 = 一堆 Frame 嵌套 -->
+<section id="nested">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>02</strong> / 嵌套</div>
+        <h2 class="section-title">一个网页<br>= 一堆 <span class="em">Frame 嵌套</span>。</h2>
+      </div>
+      <p class="section-sub">
+        Figma 里的图层树，几乎就是代码里的组件树。
+        点一下左边的图层节点，看右边对应的代码结构。
+      </p>
+    </div>
+
+    <div class="lc-stage">
+      <!-- Mock Figma layer panel -->
+      <div class="figma-layers">
+        <div class="fl-tabs">
+          <div class="fl-tab active">Layers</div>
+          <div class="fl-tab">Assets</div>
+        </div>
+        <div class="fl-pages">▾ Page 1 / Hero</div>
+        <div class="fl-tree">
+          <div class="fl-node is-active" data-depth="0" data-key="page">
+            <span class="caret">▾</span>
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="1" stroke="currentColor" stroke-width="1.2"/></svg></span>
+            <span class="nm">PageRoot</span>
+          </div>
+          <div class="fl-node" data-depth="1" data-key="header">
+            <span class="caret">▾</span>
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="1" stroke="currentColor" stroke-width="1.2"/></svg></span>
+            <span class="nm">Header</span>
+          </div>
+          <div class="fl-node" data-depth="2" data-key="logo">
+            <span class="caret">▸</span>
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/></svg></span>
+            <span class="nm">Logo</span>
+          </div>
+          <div class="fl-node" data-depth="2" data-key="nav">
+            <span class="caret">▾</span>
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="1" stroke="currentColor" stroke-width="1.2"/></svg></span>
+            <span class="nm">Nav</span>
+          </div>
+          <div class="fl-node" data-depth="3" data-key="navitem">
+            <span class="caret">▸</span>
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M2 7h10M2 10h6" stroke="currentColor" stroke-width="1.2"/></svg></span>
+            <span class="nm">NavItem · Home</span>
+          </div>
+          <div class="fl-node" data-depth="1" data-key="hero">
+            <span class="caret">▾</span>
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="1" stroke="currentColor" stroke-width="1.2"/></svg></span>
+            <span class="nm">HeroSection</span>
+          </div>
+          <div class="fl-node" data-depth="2" data-key="herotitle">
+            <span class="caret">▸</span>
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3h8M7 3v8" stroke="currentColor" stroke-width="1.2"/></svg></span>
+            <span class="nm">HeroTitle</span>
+          </div>
+          <div class="fl-node" data-depth="2" data-key="cta">
+            <span class="caret">▸</span>
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="4" width="10" height="6" rx="3" stroke="currentColor" stroke-width="1.2"/></svg></span>
+            <span class="nm">Button · CTA</span>
+          </div>
+          <div class="fl-node" data-depth="1" data-key="footer">
+            <span class="caret">▸</span>
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="1" stroke="currentColor" stroke-width="1.2"/></svg></span>
+            <span class="nm">Footer</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Code tree -->
+      <div class="code-tree">
+        <div class="ct-head">PageRoot.tree (代码侧)</div>
+        <div class="ct-line is-active" data-key="page"><span class="ctag">&lt;PageRoot&gt;</span></div>
+        <div class="ct-line" data-key="header" style="padding-left: 16px;"><span class="ctag">&lt;Header&gt;</span></div>
+        <div class="ct-line" data-key="logo" style="padding-left: 32px;"><span class="ctag">&lt;Logo /&gt;</span></div>
+        <div class="ct-line" data-key="nav" style="padding-left: 32px;"><span class="ctag">&lt;Nav&gt;</span></div>
+        <div class="ct-line" data-key="navitem" style="padding-left: 48px;"><span class="ctag">&lt;NavItem&gt;</span> Home <span class="ctag">&lt;/NavItem&gt;</span></div>
+        <div class="ct-line" data-key="nav" style="padding-left: 32px;"><span class="ctag">&lt;/Nav&gt;</span></div>
+        <div class="ct-line" data-key="header" style="padding-left: 16px;"><span class="ctag">&lt;/Header&gt;</span></div>
+        <div class="ct-line" data-key="hero" style="padding-left: 16px;"><span class="ctag">&lt;HeroSection&gt;</span></div>
+        <div class="ct-line" data-key="herotitle" style="padding-left: 32px;"><span class="ctag">&lt;HeroTitle /&gt;</span></div>
+        <div class="ct-line" data-key="cta" style="padding-left: 32px;"><span class="ctag">&lt;Button</span> <span class="cattr">variant</span>=<span class="cstr">"cta"</span> <span class="ctag">/&gt;</span></div>
+        <div class="ct-line" data-key="hero" style="padding-left: 16px;"><span class="ctag">&lt;/HeroSection&gt;</span></div>
+        <div class="ct-line" data-key="footer" style="padding-left: 16px;"><span class="ctag">&lt;Footer /&gt;</span></div>
+        <div class="ct-line is-active" data-key="page"><span class="ctag">&lt;/PageRoot&gt;</span></div>
+      </div>
+
+      <!-- Readout strip -->
+      <div class="lc-readout">
+        <div class="pickname">当前选中 — <span class="em" id="lc-name">PageRoot（整页根节点）</span></div>
+        <div class="hint">点击左侧 <strong>Figma 图层</strong> · 看代码侧高亮 ↔</div>
+      </div>
+    </div>
+
+    <div class="quote-box" style="margin-top: 32px;">
+      <span class="qmark">"</span>
+      你在 Figma 里嵌套 Frame，前端在代码里嵌套<span class="em">组件</span>。
+      <span class="qsub">同一件事 · 不同语言。Figma 的图层面板，就是代码侧的"目录"。</span>
+    </div>
+  </div>
+</section>
+
+<!-- §03 / Component / Instance -->
+<section id="instance">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>03</strong> / 复用</div>
+        <h2 class="section-title">同一个组件，<br>用 <span class="em">N 次</span>。</h2>
+      </div>
+      <p class="section-sub">
+        Figma 里你画一个 Card Component，从 Asset 拖出来 N 个 Instance。
+        代码里前端也只写一次，调用 N 次。拖动滑块试试。
+      </p>
+    </div>
+
+    <div class="ci-stage" id="ciStage">
+      <div class="ci-master-row">
+        <div class="ci-master-card">
+          <div class="ci-thumb" style="display:flex; align-items:center; justify-content:center; font-size:36px;">◆</div>
+          <h4 class="ci-title">{ Title 标题 }</h4>
+          <p class="ci-price">{ Price 价格 }</p>
+        </div>
+        <div class="ci-master-explain">
+          这是 Figma 里的 <strong>主组件 · Main Component</strong>。
+          所有 Instance 都从它复制出来。它定义了"<strong>骨架</strong>"：
+          上面一张图、中间一行标题、下面一个价格 —— 三块的位置和样式固定。<br><br>
+          <span class="accent">改主组件的圆角、配色、字号、间距 → 所有 Instance 自动跟着变。</span><br>
+          代码侧也是同样的逻辑：前端写<strong>一次</strong> Card，然后调用<strong>无数次</strong>。
+        </div>
+      </div>
+
+      <div class="ci-controls">
+        <div class="cc-label">Instance 数量</div>
+        <div class="cc-value" id="ciCount">3</div>
+        <input type="range" class="cc-slider" id="ciSlider" min="1" max="20" value="3">
+        <div class="cc-note">画 1 张和画 20 张 —— 代码量一样。</div>
+      </div>
+
+      <div class="ci-canvas" id="ciCanvas"></div>
+
+      <div class="code-tree" style="margin-top: 8px;">
+        <div class="ct-head">代码侧的"循环写法" — 写一次，自动生成 <span style="color: var(--accent)" id="codeN">3</span> 张</div>
+        <div class="ct-line"><span class="ccom">// products = [{...}, {...}, {...}]   ← 一组数据，可多可少</span></div>
+        <div class="ct-line"><span class="ctag">&lt;Grid&gt;</span></div>
+        <div class="ct-line" style="padding-left: 16px;">products.map(item =&gt;</div>
+        <div class="ct-line" style="padding-left: 32px;"><span class="ctag">&lt;Card</span> <span class="cattr">image</span>=<span class="cstr">{item.image}</span> <span class="cattr">title</span>=<span class="cstr">{item.title}</span> <span class="cattr">price</span>=<span class="cstr">{item.price}</span> <span class="ctag">/&gt;</span></div>
+        <div class="ct-line" style="padding-left: 16px;">)</div>
+        <div class="ct-line"><span class="ctag">&lt;/Grid&gt;</span></div>
+      </div>
+    </div>
+
+    <div class="quote-box" style="margin-top: 32px;">
+      <span class="qmark">"</span>
+      Figma 改主组件 → 所有 Instance 跟着变。<br>
+      代码改一处 → 所有调用<span class="em">同步更新</span>。
+      <span class="qsub">这就是为什么前端反复说："这个东西要做成可复用的组件"。和你在 Figma 里把卡片做成 Component，是同一回事。</span>
+    </div>
+  </div>
+</section>
+
+<!-- §04 / Data vs Style -->
+<section id="data-style">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>04</strong> / 数据 vs 样式</div>
+        <h2 class="section-title">什么是<span class="em">变的</span>，<br>什么是<span class="em">固定的</span>。</h2>
+      </div>
+      <p class="section-sub">
+        一张卡片里，"会变"的东西（图、文案、价格）是<strong>数据</strong>；
+        "固定"的东西（圆角、配色、字号、间距）是<strong>样式</strong>。
+        切换下面的开关，看清这两层。
+      </p>
+    </div>
+
+    <div class="ds-stage">
+      <div class="ds-toggle" id="dsToggle">
+        <button data-mode="both" class="active">显示全部</button>
+        <button data-mode="data">数据层 · DATA</button>
+        <button data-mode="style">样式层 · STYLE</button>
+      </div>
+
+      <div class="ds-canvas">
+        <div class="ds-card" id="dsCard">
+          <div class="ds-mark" data-kind="style">
+            <span class="ds-flag df-style">圆角 · 阴影</span>
+            <div class="ds-thumb ds-mark" data-kind="data">
+              <span class="ds-flag df-data">图 · IMAGE</span>
+            </div>
+          </div>
+          <h4 class="ds-mark" data-kind="data">
+            <span class="ds-flag df-data">标题 · TITLE</span>
+            手冲咖啡 · 哥伦比亚
+          </h4>
+          <p class="ds-price ds-mark" data-kind="data">
+            <span class="ds-flag df-data">价格 · PRICE</span>
+            ¥ 38
+          </p>
+          <p class="ds-desc ds-mark" data-kind="style">
+            <span class="ds-flag df-style">字号 · 颜色</span>
+            柑橘香气 · 中度烘焙 · 醇厚回甘
+          </p>
+        </div>
+
+        <div class="ds-explain">
+          <div class="ds-block data" id="dsBlockData">
+            <h4><span class="sw green"></span>数据层 · 会变的</h4>
+            <ul>
+              <li><strong>图片</strong> — 不同商品有不同图</li>
+              <li><strong>标题</strong> — 不同商品有不同名字</li>
+              <li><strong>价格</strong> — 每张卡片不一样</li>
+            </ul>
+            <p>设计师改文案 / 换图 = 改数据。前端会把这些字段做成"参数"留出来，外部传什么，卡片就显示什么。</p>
+          </div>
+          <div class="ds-block style" id="dsBlockStyle">
+            <h4><span class="sw blue"></span>样式层 · 固定的</h4>
+            <ul>
+              <li><strong>圆角 / 阴影</strong> — 整套卡片统一</li>
+              <li><strong>背景色 / 字号 / 间距</strong> — 设计规范</li>
+            </ul>
+            <p>设计师改颜色 / 改间距 = 改样式。这些写一次就好，所有卡片自动跟着变（就像 Figma 里改主组件）。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quote-box" style="margin-top: 32px;">
+      <span class="qmark">"</span>
+      想清楚<span class="em">什么会变、什么不会变</span>，<br>
+      你的设计稿就有"骨架"了。
+      <span class="qsub">前端拿到稿子第一件事就是问这个。你提前想好 → 一拍即合。</span>
+    </div>
+  </div>
+</section>
+
+<!-- §05 / Naming -->
+<section id="naming">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>05</strong> / 命名</div>
+        <h2 class="section-title">图层名 = <br><span class="em">代码组件名</span>。</h2>
+      </div>
+      <p class="section-sub">
+        Figma 图层叫什么名，代码侧组件就叫什么名。
+        随手命名 vs 有意义命名 —— 切换看看差距。
+      </p>
+    </div>
+
+    <div class="nm-switch" id="nmSwitch">
+      <button data-mode="bad">BAD · 随手命名</button>
+      <button data-mode="both" class="active">两边对照</button>
+      <button data-mode="good">GOOD · 有意义</button>
+    </div>
+
+    <div class="nm-stage" id="nmStage" data-show="both">
+      <div class="nm-card bad">
+        <span class="nm-tag">BAD · 前端只能猜</span>
+        <h4>"Frame 247 / Group 3 / Rectangle 12"</h4>
+        <div class="nm-tree">
+          <div class="nm-row"><span class="branch">▾ </span><span class="iconmark">▢</span><span class="name">Frame 247</span></div>
+          <div class="nm-row"><span class="branch">  ├ </span><span class="iconmark">▢</span><span class="name">Group 3</span></div>
+          <div class="nm-row"><span class="branch">  │  ├ </span><span class="iconmark">○</span><span class="name">Ellipse 8</span></div>
+          <div class="nm-row"><span class="branch">  │  └ </span><span class="iconmark">T</span><span class="name">Text 12</span></div>
+          <div class="nm-row"><span class="branch">  ├ </span><span class="iconmark">▢</span><span class="name">Rectangle 47</span></div>
+          <div class="nm-row"><span class="branch">  └ </span><span class="iconmark">▢</span><span class="name">Group 12</span></div>
+          <div class="nm-row"><span class="branch">     ├ </span><span class="iconmark">T</span><span class="name">Text 18</span></div>
+          <div class="nm-row"><span class="branch">     └ </span><span class="iconmark">T</span><span class="name">Text 19</span></div>
+        </div>
+        <p class="nm-foot">
+          前端打开稿子，每个图层都靠<strong>猜</strong>。"Group 3 是头像区？还是按钮组？"
+          猜错就要返工。命名出来的代码也是 <code>div247 / group3 / rect47</code>，没人看得懂。
+        </p>
+      </div>
+
+      <div class="nm-card good">
+        <span class="nm-tag">GOOD · 一眼看懂</span>
+        <h4>"ProductCard / Header / PriceTag"</h4>
+        <div class="nm-tree">
+          <div class="nm-row"><span class="branch">▾ </span><span class="iconmark">▢</span><span class="name">ProductCard</span></div>
+          <div class="nm-row"><span class="branch">  ├ </span><span class="iconmark">▢</span><span class="name">Header</span></div>
+          <div class="nm-row"><span class="branch">  │  ├ </span><span class="iconmark">○</span><span class="name">Avatar</span></div>
+          <div class="nm-row"><span class="branch">  │  └ </span><span class="iconmark">T</span><span class="name">UserName</span></div>
+          <div class="nm-row"><span class="branch">  ├ </span><span class="iconmark">▢</span><span class="name">CoverImage</span></div>
+          <div class="nm-row"><span class="branch">  └ </span><span class="iconmark">▢</span><span class="name">PriceTag</span></div>
+          <div class="nm-row"><span class="branch">     ├ </span><span class="iconmark">T</span><span class="name">Currency</span></div>
+          <div class="nm-row"><span class="branch">     └ </span><span class="iconmark">T</span><span class="name">Amount</span></div>
+        </div>
+        <p class="nm-foot">
+          前端读一遍图层名，<strong>整个页面结构就清楚了</strong>。
+          代码组件直接用同名：<code>&lt;ProductCard&gt; · &lt;PriceTag&gt;</code>。
+          以后改东西，定位、沟通、维护，全部走在同一个词汇表上。
+        </p>
+      </div>
+    </div>
+
+    <div class="nm-followup">
+      <div class="nf-tag">送给前端的礼物</div>
+      <p>起好图层名，是设计师能给前端最重要的<span class="em">第一份礼物</span>。<br>
+      五分钟改名字 → 省下半小时来回沟通。</p>
+    </div>
+  </div>
+</section>
+
+<!-- §06 / Recap & Next -->
+<section id="recap">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="section-num"><strong>06</strong> / 速查</div>
+        <h2 class="section-title">出师 ·<br>下次<span class="em">看稿子</span>，<br>记住这 4 句话。</h2>
+      </div>
+      <p class="section-sub">
+        不用记代码，只要记住这四个 Figma 视角的小习惯，
+        你的稿子就比 80% 的设计师更好对接。
+      </p>
+    </div>
+
+    <div class="recap-grid">
+      <div class="recap-card">
+        <div class="recap-num">01</div>
+        <h4>图层嵌套 = 组件树</h4>
+        <p>你怎么嵌 Frame，前端就怎么嵌组件。Figma 的图层面板就是代码的目录。</p>
+      </div>
+      <div class="recap-card">
+        <div class="recap-num">02</div>
+        <h4>Component / Instance</h4>
+        <p>同一种东西出现多次 → 一定要做成组件。一处改，处处变。</p>
+      </div>
+      <div class="recap-card">
+        <div class="recap-num">03</div>
+        <h4>数据 vs 样式</h4>
+        <p>会变的（文字 / 图 / 价格）= 数据；固定的（颜色 / 圆角 / 间距）= 样式。</p>
+      </div>
+      <div class="recap-card">
+        <div class="recap-num">04</div>
+        <h4>命名要"有人话"</h4>
+        <p>"ProductCard" 比 "Frame 247" 好。前端能看懂的图层名 = 干净的代码。</p>
+      </div>
+    </div>
+
+    <a href="tokens-figma.html" class="next-post">
+      <div>
+        <div class="np-tag">下一篇 · NEXT · C0</div>
+        <h4>Variables / Tokens 入门</h4>
+        <p>继续往下一篇。</p>
+      </div>
+      <span class="np-cta">下一篇 <span class="arr">→</span></span>
+    </a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="wrap">
+    <div class="byline-group">
+    <div class="byline">
+      <img class="avatar" src="author.jpg" alt="范米花儿">
+      <div class="byline-meta">
+        <div class="byline-label"><span class="dot"></span>作者 · WRITTEN BY</div>
+        <h3 class="byline-name">嗨，我是 <span class="em">范米花儿</span></h3>
+        <p class="byline-tag">设计工程师 ——<br>设计 × 代码，两边都做。</p>
+      </div>
+    </div>
+</div>
+        <div class="footer-wechat">
+      <img class="wechat-qr" src="wechat-qr.png" alt="范米花儿 微信二维码">
+      <div class="wechat-meta">
+        <div class="wechat-label">微信 · WECHAT</div>
+        <div class="wechat-id">vanvan_0422</div>
+      </div>
+    </div>
+    <div class="footer-meta">
+      做于 <span class="mono">2026</span> · 用 <span class="heart">●</span> 写给 <span class="mono">DESIGNERS &amp; DEVELOPERS</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ==========================================================
+  //  §02  Layer ↔ Code 双向联动
+  // ==========================================================
+  const flNodes = document.querySelectorAll('.fl-node');
+  const ctLines = document.querySelectorAll('.ct-line');
+  const lcName  = document.getElementById('lc-name');
+
+  const nameMap = {
+    page:      'PageRoot（整页根节点）',
+    header:    'Header（顶部导航条）',
+    logo:      'Logo（品牌图标）',
+    nav:       'Nav（导航容器）',
+    navitem:   'NavItem（一项导航链接）',
+    hero:      'HeroSection（首屏大区域）',
+    herotitle: 'HeroTitle（大标题）',
+    cta:       'Button · CTA（行动按钮）',
+    footer:    'Footer（页脚）'
+  };
+
+  function activateKey(key) {
+    flNodes.forEach(n => n.classList.toggle('is-active', n.dataset.key === key));
+    ctLines.forEach(l => l.classList.toggle('is-active', l.dataset.key === key));
+    if (lcName && nameMap[key]) lcName.textContent = nameMap[key];
+  }
+
+  flNodes.forEach(node => {
+    node.addEventListener('click', () => activateKey(node.dataset.key));
+  });
+  ctLines.forEach(line => {
+    line.addEventListener('mouseenter', () => activateKey(line.dataset.key));
+  });
+
+  // ==========================================================
+  //  §03  Component / Instance — 滑块控制 Instance 数量
+  // ==========================================================
+  const ciSlider = document.getElementById('ciSlider');
+  const ciCount  = document.getElementById('ciCount');
+  const ciCanvas = document.getElementById('ciCanvas');
+  const ciStage  = document.getElementById('ciStage');
+  const codeN    = document.getElementById('codeN');
+
+  // 真实感的卡片数据池（数据是变的，样式是固定的）
+  const cardPool = [
+    { thumb: 'linear-gradient(135deg, #ffd95e, #ff7355)', emoji: '☕', title: '哥伦比亚 · 手冲', price: '¥ 38' },
+    { thumb: 'linear-gradient(135deg, #a8e6a3, #1f6b3a)', emoji: '🍵', title: '玉露 · 抹茶', price: '¥ 28' },
+    { thumb: 'linear-gradient(135deg, #dde6ff, #4a7eff)', emoji: '🥤', title: '冷萃 · 美式', price: '¥ 22' },
+    { thumb: 'linear-gradient(135deg, #ffe4dc, #EF7627)', emoji: '🍰', title: '提拉米苏', price: '¥ 36' },
+    { thumb: 'linear-gradient(135deg, #f7f4ec, #c79f1e)', emoji: '🥐', title: '可颂 · 黄油', price: '¥ 15' },
+    { thumb: 'linear-gradient(135deg, #d4ecdb, #1f6b3a)', emoji: '🥗', title: '清晨沙拉', price: '¥ 42' },
+    { thumb: 'linear-gradient(135deg, #fff4d4, #ffcf3d)', emoji: '🍯', title: '蜂蜜柚子茶', price: '¥ 26' },
+    { thumb: 'linear-gradient(135deg, #ffd6f5, #ff85c3)', emoji: '🍓', title: '草莓奶昔', price: '¥ 32' },
+    { thumb: 'linear-gradient(135deg, #d6f0ff, #4a9cff)', emoji: '🧊', title: '冰美式 · 拿铁', price: '¥ 25' },
+    { thumb: 'linear-gradient(135deg, #e4e4e7, #8a8a92)', emoji: '🥖', title: '法棍三明治', price: '¥ 30' }
+  ];
+
+  function renderInstances(n) {
+    ciCanvas.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      const data = cardPool[i % cardPool.length];
+      const card = document.createElement('div');
+      card.className = 'ci-card';
+      card.style.animationDelay = (i * 30) + 'ms';
+      card.innerHTML = `
+        <span class="ci-badge">Instance #${i + 1}</span>
+        <div class="ci-thumb" style="background: ${data.thumb}; display:flex; align-items:center; justify-content:center; font-size:32px;">${data.emoji}</div>
+        <h4 class="ci-title">${data.title}</h4>
+        <p class="ci-price">${data.price}</p>
+      `;
+      ciCanvas.appendChild(card);
+    }
+    ciCount.textContent = n;
+    if (codeN) codeN.textContent = n;
+  }
+
+  if (ciSlider) {
+    renderInstances(parseInt(ciSlider.value, 10));
+    ciSlider.addEventListener('input', e => {
+      renderInstances(parseInt(e.target.value, 10));
+    });
+    // hover canvas → 显示 Instance 编号
+    ciCanvas.addEventListener('mouseenter', () => ciStage.classList.add('show-instance'));
+    ciCanvas.addEventListener('mouseleave', () => ciStage.classList.remove('show-instance'));
+  }
+
+  // ==========================================================
+  //  §04  Data vs Style toggle
+  // ==========================================================
+  const dsToggle    = document.getElementById('dsToggle');
+  const dsCard      = document.getElementById('dsCard');
+  const dsBlockData = document.getElementById('dsBlockData');
+  const dsBlockStyle= document.getElementById('dsBlockStyle');
+
+  if (dsToggle) {
+    dsToggle.addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const mode = btn.dataset.mode;
+      dsToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+
+      dsCard.classList.remove('show-data', 'show-style');
+      dsBlockData.classList.remove('is-active');
+      dsBlockStyle.classList.remove('is-active');
+
+      if (mode === 'data') {
+        dsCard.classList.add('show-data');
+        dsBlockData.classList.add('is-active');
+      } else if (mode === 'style') {
+        dsCard.classList.add('show-style');
+        dsBlockStyle.classList.add('is-active');
+      } else {
+        dsCard.classList.add('show-data', 'show-style');
+        dsBlockData.classList.add('is-active');
+        dsBlockStyle.classList.add('is-active');
+      }
+    });
+    // 默认显示全部
+    dsCard.classList.add('show-data', 'show-style');
+    dsBlockData.classList.add('is-active');
+    dsBlockStyle.classList.add('is-active');
+  }
+
+  // ==========================================================
+  //  §05  Naming switch (BAD / BOTH / GOOD)
+  // ==========================================================
+  const nmSwitch = document.getElementById('nmSwitch');
+  const nmStage  = document.getElementById('nmStage');
+  if (nmSwitch && nmStage) {
+    nmSwitch.addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      nmSwitch.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      nmStage.dataset.show = btn.dataset.mode;
+    });
+  }
+</script>
+
+
+<!-- 路线图弹窗 (10 分类) -->
+<div class="rm-modal" id="rm-modal" hidden>
+  <div class="rm-backdrop" data-rm-close></div>
+  <div class="rm-dialog" role="dialog" aria-label="完整路线图">
+    <button class="rm-close" data-rm-close aria-label="关闭">✕</button>
+    <div class="rm-header">
+      <div class="rm-tag">阅读顺序 · ROADMAP</div>
+      <h3 class="rm-title">START → 10 分类 <span class="rm-em">·</span> 35 篇</h3>
+      <p class="rm-sub">01 界面拆解 5 · 02 视觉系统 3 · 03 状态动作 3 · 04 样式翻译 4 · 05 AI 实现 4 · 06 组件材料 3 · 07 项目启动 4 · 08 调试 3 · 09 协作 3 · 10 上线 3</p>
+    </div>
+    <div class="rm-body">
+      <div class="rm-mod">
+        <div class="rm-mod-key">01 · 界面怎么被代码拆开</div>
+        <div class="rm-mod-list">
+          <a href="basics-figma.html" class="rm-cell"><span class="rm-cell-code">A0</span><span class="rm-cell-name">三件套 · HTML / CSS / JS</span><span class="rm-cell-tier">入门</span></a>
+          <a href="box-figma.html" class="rm-cell"><span class="rm-cell-code">A1</span><span class="rm-cell-name">盒子 · Auto Layout</span><span class="rm-cell-tier">基础</span></a>
+          <a href="components-figma.html" class="rm-cell"><span class="rm-cell-code">A2</span><span class="rm-cell-name">组件 · Variants &amp; Props</span><span class="rm-cell-tier">基础</span></a>
+          <a href="button-system-figma.html" class="rm-cell"><span class="rm-cell-code">A3</span><span class="rm-cell-name">Button System · 组件演化</span><span class="rm-cell-tier">进阶</span></a>
+          <a href="page-figma.html" class="rm-cell"><span class="rm-cell-code">B0</span><span class="rm-cell-name">拼页面 · 组件嵌套</span><span class="rm-cell-tier">入门</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">02 · 视觉规则怎么变成系统</div>
+        <div class="rm-mod-list">
+          <a href="tokens-figma.html" class="rm-cell"><span class="rm-cell-code">C0</span><span class="rm-cell-name">Variables / Tokens 入门</span><span class="rm-cell-tier">入门</span></a>
+          <a href="colors-type-figma.html" class="rm-cell"><span class="rm-cell-code">C1</span><span class="rm-cell-name">Colors / Type / Spacing</span><span class="rm-cell-tier">基础</span></a>
+          <a href="theme-switch-figma.html" class="rm-cell"><span class="rm-cell-code">C2</span><span class="rm-cell-name">Theme 切换实战</span><span class="rm-cell-tier">进阶</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">03 · 界面怎么有状态和动作</div>
+        <div class="rm-mod-list">
+          <a href="states-figma.html" class="rm-cell"><span class="rm-cell-code">D0</span><span class="rm-cell-name">视觉态 · 看得见的状态</span><span class="rm-cell-tier">入门</span></a>
+          <a href="interactive-figma.html" class="rm-cell"><span class="rm-cell-code">D1</span><span class="rm-cell-name">Interactive Component</span><span class="rm-cell-tier">基础</span></a>
+          <a href="transition-figma.html" class="rm-cell"><span class="rm-cell-code">D2</span><span class="rm-cell-name">动画 · Transition</span><span class="rm-cell-tier">进阶</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">04 · 设计样式怎么翻译成 CSS</div>
+        <div class="rm-mod-list">
+          <a href="inverted-radius-figma.html" class="rm-cell"><span class="rm-cell-code">S1</span><span class="rm-cell-name">内翻圆角 · Inverted Border Radius</span><span class="rm-cell-tier">样式</span></a>
+          <a href="shadow-layer-figma.html" class="rm-cell"><span class="rm-cell-code">S2</span><span class="rm-cell-name">阴影 / 层级 · Shadow &amp; Elevation</span><span class="rm-cell-tier">样式</span></a>
+          <a href="glass-blur-figma.html" class="rm-cell"><span class="rm-cell-code">S3</span><span class="rm-cell-name">毛玻璃 / 背景模糊 · Backdrop Blur</span><span class="rm-cell-tier">样式</span></a>
+          <a href="mask-crop-figma.html" class="rm-cell"><span class="rm-cell-code">S4</span><span class="rm-cell-name">遮罩 / 裁切 · Mask &amp; Clip</span><span class="rm-cell-tier">样式</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key" style="color:var(--accent);">05 · AI 怎么参与实现</div>
+        <div class="rm-mod-list">
+          <a href="q1-mcp-figma.html" class="rm-cell"><span class="rm-cell-code">Q1</span><span class="rm-cell-name">MCP · AI 的 USB 接口</span><span class="rm-cell-tier">工具</span></a>
+          <a href="q2-skills-figma.html" class="rm-cell"><span class="rm-cell-code">Q2</span><span class="rm-cell-name">Skills · SKILL.md 拆解</span><span class="rm-cell-tier">工具</span></a>
+          <a href="q3-agent-figma.html" class="rm-cell"><span class="rm-cell-code">Q3</span><span class="rm-cell-name">Agent · 团队式 AI</span><span class="rm-cell-tier">工具</span></a>
+          <a href="k4-mcp-reads-figma.html" class="rm-cell"><span class="rm-cell-code">K4</span><span class="rm-cell-name">MCP 读了啥 · AI 看到的设计稿</span><span class="rm-cell-tier">基础</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">06 · 用什么材料搭界面</div>
+        <div class="rm-mod-list">
+          <a href="k1-ui-library-figma.html" class="rm-cell"><span class="rm-cell-code">K1</span><span class="rm-cell-name">UI 库 · shadcn vs Antd</span><span class="rm-cell-tier">基础</span></a>
+          <a href="k2-shadcn-customize-figma.html" class="rm-cell"><span class="rm-cell-code">K2</span><span class="rm-cell-name">shadcn 改造 · 变成你家的</span><span class="rm-cell-tier">基础</span></a>
+          <a href="k3-granularity-figma.html" class="rm-cell"><span class="rm-cell-code">K3</span><span class="rm-cell-name">颗粒度的代价 · AI 拼不准的根因</span><span class="rm-cell-tier">基础</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">07 · 项目怎么跑起来</div>
+        <div class="rm-mod-list">
+          <a href="f1-npm-figma.html" class="rm-cell"><span class="rm-cell-code">F1</span><span class="rm-cell-name">npm 是什么</span><span class="rm-cell-tier">工程</span></a>
+          <a href="f2-import-figma.html" class="rm-cell"><span class="rm-cell-code">F2</span><span class="rm-cell-name">import 与路径</span><span class="rm-cell-tier">工程</span></a>
+          <a href="f3-dev-build-figma.html" class="rm-cell"><span class="rm-cell-code">F3</span><span class="rm-cell-name">dev vs build</span><span class="rm-cell-tier">工程</span></a>
+          <a href="f4-hidden-files-figma.html" class="rm-cell"><span class="rm-cell-code">F4</span><span class="rm-cell-name">看不见的文件</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">08 · 坏了怎么查</div>
+        <div class="rm-mod-list">
+          <a href="h1-devtools-elements-figma.html" class="rm-cell"><span class="rm-cell-code">H1</span><span class="rm-cell-name">DevTools Elements</span><span class="rm-cell-tier">工程</span></a>
+          <a href="h2-console-error-figma.html" class="rm-cell"><span class="rm-cell-code">H2</span><span class="rm-cell-name">Console 报错</span><span class="rm-cell-tier">工程</span></a>
+          <a href="h3-network-figma.html" class="rm-cell"><span class="rm-cell-code">H3</span><span class="rm-cell-name">Network 面板</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">09 · 怎么协作</div>
+        <div class="rm-mod-list">
+          <a href="g1-commit-branch-figma.html" class="rm-cell"><span class="rm-cell-code">G1</span><span class="rm-cell-name">commit / branch</span><span class="rm-cell-tier">工程</span></a>
+          <a href="g2-conflict-figma.html" class="rm-cell"><span class="rm-cell-code">G2</span><span class="rm-cell-name">冲突怎么解</span><span class="rm-cell-tier">工程</span></a>
+          <a href="g3-pr-review-figma.html" class="rm-cell"><span class="rm-cell-code">G3</span><span class="rm-cell-name">PR / Review</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+      <div class="rm-mod">
+        <div class="rm-mod-key">10 · 怎么上线</div>
+        <div class="rm-mod-list">
+          <a href="j1-dns-figma.html" class="rm-cell"><span class="rm-cell-code">J1</span><span class="rm-cell-name">DNS / 域名</span><span class="rm-cell-tier">工程</span></a>
+          <a href="j2-vercel-figma.html" class="rm-cell"><span class="rm-cell-code">J2</span><span class="rm-cell-name">Vercel 部署</span><span class="rm-cell-tier">工程</span></a>
+          <a href="j3-cache-cdn-figma.html" class="rm-cell"><span class="rm-cell-code">J3</span><span class="rm-cell-name">缓存 / CDN</span><span class="rm-cell-tier">工程</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var modal = document.getElementById('rm-modal');
+  if (!modal) return;
+  var openBtns = document.querySelectorAll('[data-rm-open]');
+  var closeBtns = modal.querySelectorAll('[data-rm-close]');
+  function open() { modal.hidden = false; document.body.style.overflow = 'hidden'; }
+  function close() { modal.hidden = true; document.body.style.overflow = ''; }
+  openBtns.forEach(function(b){ b.addEventListener('click', function(e){ e.preventDefault(); open(); }); });
+  closeBtns.forEach(function(b){ b.addEventListener('click', close); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !modal.hidden) close(); });
+})();
+</script>
+
+<script>
+/* inject signature gradient defs into journey SVG */
+(function(){
+  function inject(){
+    var svg = document.getElementById('journey-svg');
+    if(!svg || svg.querySelector('#sig-grad-svg')) return;
+    var ns = 'http://www.w3.org/2000/svg';
+    var defs = document.createElementNS(ns,'defs');
+    var lg = document.createElementNS(ns,'linearGradient');
+    lg.setAttribute('id','sig-grad-svg');
+    lg.setAttribute('x1','0'); lg.setAttribute('y1','0');
+    lg.setAttribute('x2','1'); lg.setAttribute('y2','1');
+    var stops = [
+      ['0%','#D52D00'], ['18%','#EF7627'], ['33%','#FF9A56'],
+      ['50%','#F7F4EC'],
+      ['67%','#D162A4'], ['82%','#B55690'], ['100%','#A30262']
+    ];
+    stops.forEach(function(s){
+      var st = document.createElementNS(ns,'stop');
+      st.setAttribute('offset',s[0]);
+      st.setAttribute('stop-color',s[1]);
+      lg.appendChild(st);
+    });
+    defs.appendChild(lg);
+    svg.insertBefore(defs, svg.firstChild);
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',inject);
+  } else { inject(); }
+})();
+</script>
+</body>
+</html>
